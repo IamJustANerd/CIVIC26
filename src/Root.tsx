@@ -10,6 +10,15 @@ import { ThankYou } from './pages/ThankYou'
 import { AdminDashboard } from './pages/AdminDashboard'
 import { AdminMaster } from './pages/AdminMaster'
 import { AdminSelection } from './pages/AdminSelection'
+import { AdminTambahPaketSoal } from './pages/AdminTambahPaketSoal'
+import { AdminEditPaketSoal } from './pages/AdminEditPaketSoal'
+import { AdminTambahTest } from './pages/AdminTambahTest'
+import { AdminEditTest } from './pages/AdminEditTest'
+import { AdminDetailTest } from './pages/AdminDetailTest'
+import { AdminDetailTestParticipant } from './pages/AdminDetailTestParticipant'
+import { AdminBuatAkun } from './pages/AdminBuatAkun'
+import { AdminListAkun } from './pages/AdminListAkun'
+import { AdminDetailAkun } from './pages/AdminDetailAkun'
 
 export function Root() {
   return (
@@ -27,6 +36,15 @@ export function Root() {
         <Route path="/thank-you/:type/:id" element={<ThankYou />} />
         <Route path="/admin-dashboard" element={<AdminDashboard />} />
         <Route path="/admin/master" element={<AdminMaster />} />
+        <Route path="/admin/tambah-paket-soal" element={<AdminTambahPaketSoal />} />
+        <Route path="/admin/edit-paket-soal" element={<AdminEditPaketSoal />} />
+        <Route path="/admin/tambah-test" element={<AdminTambahTest />} />
+        <Route path="/admin/edit-test" element={<AdminEditTest />} />
+        <Route path="/admin/detail-test" element={<AdminDetailTest />} />
+        <Route path="/admin/detail-test/:id" element={<AdminDetailTestParticipant />} />
+        <Route path="/admin/buat-akun" element={<AdminBuatAkun />} />
+        <Route path="/admin/list-akun" element={<AdminListAkun />} />
+        <Route path="/admin/detail-akun/:id" element={<AdminDetailAkun />} />
         <Route path="/admin/tryout" element={<AdminSelection />} />
         <Route path="/admin/test" element={<AdminSelection />} />
       </Routes>
