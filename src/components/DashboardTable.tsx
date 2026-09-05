@@ -18,22 +18,22 @@ export const DashboardTable = ({ title, data }: DashboardTableProps) => (
     </div>
     
     <div className="overflow-y-auto overflow-x-auto flex-grow rounded-lg">
-      <table className="w-full text-left font-oxanium text-sm md:text-base border-collapse text-black">
+      <table className="w-full table-fixed text-left font-oxanium text-sm md:text-base border-collapse text-black">
         <thead className="sticky top-0 bg-light z-10">
           <tr className="text-dark">
-            <th className="pb-3 px-3 font-normal whitespace-nowrap">{title}</th>
-            <th className="pb-3 px-3 font-normal whitespace-nowrap text-center">Waktu Mulai</th>
-            <th className="pb-3 px-3 font-normal whitespace-nowrap text-center">Waktu Berakhir</th>
-            <th className="pb-3 px-3 font-normal whitespace-nowrap text-right">Status</th>
+            <th className="pb-3 px-2 md:px-3 font-normal w-1/4">{title}</th>
+            <th className="pb-3 px-2 md:px-3 font-normal text-center w-1/4">Waktu Mulai</th>
+            <th className="pb-3 px-2 md:px-3 font-normal text-center w-1/4">Waktu Berakhir</th>
+            <th className="pb-3 px-2 md:px-3 font-normal text-right w-1/4">Status</th>
           </tr>
         </thead>
         <tbody>
           {data.map((item, i) => (
             <tr key={i} className={`border-t border-primary/20 ${i % 2 === 0 ? 'bg-primary/5' : 'bg-transparent'}`}>
-              <td className="py-3 px-3 whitespace-nowrap">{item.name}</td>
-              <td className="py-3 px-3 whitespace-nowrap text-center whitespace-pre-line leading-tight">{item.start}</td>
-              <td className="py-3 px-3 whitespace-nowrap text-center whitespace-pre-line leading-tight">{item.end}</td>
-              <td className="py-3 px-3 whitespace-nowrap text-right">{item.status}</td>
+              <td className="py-3 px-2 md:px-3 truncate">{item.name}</td>
+              <td className="py-3 px-2 md:px-3 text-center whitespace-pre-line leading-tight">{item.start}</td>
+              <td className="py-3 px-2 md:px-3 text-center whitespace-pre-line leading-tight">{item.end}</td>
+              <td className="py-3 px-2 md:px-3 text-right break-words">{item.status}</td>
             </tr>
           ))}
         </tbody>

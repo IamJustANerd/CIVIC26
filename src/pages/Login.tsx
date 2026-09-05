@@ -14,11 +14,11 @@ export const Login = () => {
   }
 
   return (
-    <div className="min-h-screen bg-primary-100 flex flex-col items-center justify-center relative p-6">
+    <div className="h-screen w-screen overflow-hidden bg-primary-100 flex flex-col items-center justify-center relative p-6">
       <Header />
 
       {/* Login Card */}
-      <div className="w-full max-w-lg bg-light border border-primary rounded-2xl p-8 md:p-12 shadow-xl">
+      <div className="w-full max-w-lg bg-light border border-primary rounded-2xl p-6 md:p-10 my-2 shadow-xl">
         <h2 className="text-4xl md:text-[42px] font-slant text-dark mb-2">Selamat Datang!</h2>
         <p className="font-oxanium text-neutral-600 text-lg md:text-xl mb-10">Tolong masukkan informasi akunmu</p>
 
@@ -89,7 +89,7 @@ export const Login = () => {
         </form>
 
         {/* Footer */}
-        <div className="mt-16 text-center">
+        <div className="mt-4 text-center">
           <p className="font-oxanium text-[10px] text-dark font-bold">
             ©2026 CIVIC. All rights reserved.
           </p>

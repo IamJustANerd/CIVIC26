@@ -44,36 +44,44 @@ export const Dashboard = () => {
     <div className="h-screen w-screen overflow-hidden bg-gradient-to-r from-white via-white via-[70%] to-danger p-4 pt-20 md:p-6 md:pt-24 relative flex flex-col">
       <Header showProfile />
 
-      {/* Dashboard Content Grid */}
-      <div className="w-full max-w-7xl mx-auto flex-grow grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 min-h-0">
+      {/* Dashboard Content Grid (Refactored to Flex for exact 3:7 ratio) */}
+      <div className="w-full max-w-7xl mx-auto flex-grow flex flex-col gap-4 md:gap-6 min-h-0">
 
-        {/* Greeting Card */}
-        <div className="bg-light border-2 border-primary rounded-3xl p-6 md:p-8 shadow-md flex flex-col justify-center h-full">
-          <h2 className="text-4xl md:text-5xl font-slant text-dark mb-4">Halo, Peserta!</h2>
-          <p className="font-oxanium text-neutral-600 text-base md:text-lg leading-relaxed">
-            Kamu masih punya 2 Try Out dan 2 Test yang belum dikerjakan. Jangan sampai kelewatan ya~
-          </p>
-        </div>
+        {/* Top Section (Greeting & Clock) - 30% height on desktop */}
+        <div className="flex flex-col lg:flex-row gap-4 md:gap-6 lg:flex-[3] min-h-0">
+          {/* Greeting Card */}
+          <div className="bg-light border-2 border-primary rounded-3xl p-6 md:p-8 shadow-md flex flex-col justify-center h-full w-full lg:w-1/2">
+            <h2 className="text-3xl md:text-4xl font-slant text-dark">Halo, Peserta!</h2>
+            <p className="font-oxanium text-neutral-600 text-base md:text-lg leading-relaxed">
+              Kamu masih punya 2 Try Out dan 2 Test yang belum dikerjakan. Jangan sampai kelewatan ya~
+            </p>
+          </div>
 
-        {/* Live Clock Section */}
-        <div className="flex flex-col justify-center px-4 md:px-8 py-2 md:py-0">
-          <p className="font-oxanium text-dark text-xl md:text-2xl mb-4">{formatDate(time)}</p>
-          <div className="flex items-center gap-1 md:gap-3">
-            <DigitBox digit={hours[0]} />
-            <DigitBox digit={hours[1]} />
-            <span className="text-primary font-bold text-3xl md:text-5xl mx-1 md:mx-2 pb-2">:</span>
-            <DigitBox digit={minutes[0]} />
-            <DigitBox digit={minutes[1]} />
-            <span className="text-primary font-bold text-3xl md:text-5xl mx-1 md:mx-2 pb-2">:</span>
-            <DigitBox digit={seconds[0]} />
-            <DigitBox digit={seconds[1]} />
+          {/* Live Clock Section */}
+          <div className="flex flex-col justify-center pr-4 md:pr-8 py-2 md:py-0 w-full lg:w-1/2 min-h-0">
+            <p className="font-oxanium text-dark text-xl md:text-2xl mb-2 lg:mb-4 shrink-0">{formatDate(time)}</p>
+            <div className="flex items-center gap-1 md:gap-3 flex-1 min-h-0 max-h-16 md:max-h-20">
+              <DigitBox digit={hours[0]} />
+              <DigitBox digit={hours[1]} />
+              <span className="text-primary font-bold text-3xl md:text-5xl mx-1 md:mx-2 flex items-center h-full pb-1">:</span>
+              <DigitBox digit={minutes[0]} />
+              <DigitBox digit={minutes[1]} />
+              <span className="text-primary font-bold text-3xl md:text-5xl mx-1 md:mx-2 flex items-center h-full pb-1">:</span>
+              <DigitBox digit={seconds[0]} />
+              <DigitBox digit={seconds[1]} />
+            </div>
           </div>
         </div>
 
-        {/* Tables */}
-        <DashboardTable title="Try Out" data={dummyTryOuts} />
-        <DashboardTable title="Test" data={dummyTests} />
-
+        {/* Bottom Section (Tables) - 70% height on desktop */}
+        <div className="flex flex-col lg:flex-row gap-4 md:gap-6 lg:flex-[7] min-h-0">
+          <div className="w-full lg:w-1/2 flex flex-col min-h-0">
+            <DashboardTable title="Try Out" data={dummyTryOuts} />
+          </div>
+          <div className="w-full lg:w-1/2 flex flex-col min-h-0">
+            <DashboardTable title="Test" data={dummyTests} />
+          </div>
+        </div>
       </div>
 
       {/* Footer */}
