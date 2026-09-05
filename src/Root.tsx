@@ -7,6 +7,9 @@ import { PreTutorial } from './pages/PreTutorial'
 import { Tutorial } from './pages/Tutorial'
 import { TestSession } from './pages/TestSession'
 import { ThankYou } from './pages/ThankYou'
+import { AdminDashboard } from './pages/AdminDashboard'
+import { AdminMaster } from './pages/AdminMaster'
+import { AdminSelection } from './pages/AdminSelection'
 
 export function Root() {
   return (
@@ -22,6 +25,10 @@ export function Root() {
         <Route path="/pre-test/:type/:id" element={<PreTest />} />
         <Route path="/test-session/:type/:id" element={<TestSession />} />
         <Route path="/thank-you/:type/:id" element={<ThankYou />} />
+        <Route path="/admin-dashboard" element={<AdminDashboard />} />
+        <Route path="/admin/master" element={<AdminMaster />} />
+        <Route path="/admin/tryout" element={<AdminSelection />} />
+        <Route path="/admin/test" element={<AdminSelection />} />
       </Routes>
     </BrowserRouter>
   )

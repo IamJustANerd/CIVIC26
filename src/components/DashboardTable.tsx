@@ -61,21 +61,24 @@ interface DashboardTableProps {
   type: TestType;
   data: TableItem[];
   compact?: boolean;
+  hideSeeAll?: boolean;
 }
 
-export const DashboardTable = ({ title, type, data, compact = false }: DashboardTableProps) => {
+export const DashboardTable = ({ title, type, data, compact = false, hideSeeAll = false }: DashboardTableProps) => {
   const navigate = useNavigate()
 
   return (
     <div className="bg-light border-2 border-primary rounded-3xl p-5 md:p-6 shadow-md flex flex-col min-h-0 h-full">
       <div className="flex justify-between items-center mb-4 shrink-0">
         <h3 className="text-3xl md:text-4xl font-slant text-dark">{title}</h3>
-        <button
-          onClick={() => navigate(`/${type}`)}
-          className="font-oxanium text-xs md:text-sm font-bold text-dark border-2 border-primary rounded-xl px-4 py-1.5 md:px-5 md:py-2 hover:bg-primary hover:text-light transition-all shadow-sm cursor-pointer"
-        >
-          Selengkapnya
-        </button>
+        {!hideSeeAll && (
+          <button
+            onClick={() => navigate(`/${type}`)}
+            className="font-oxanium text-xs md:text-sm font-bold text-dark border-2 border-primary rounded-xl px-4 py-1.5 md:px-5 md:py-2 hover:bg-primary hover:text-light transition-all shadow-sm cursor-pointer"
+          >
+            Selengkapnya
+          </button>
+        )}
       </div>
 
       <div className="overflow-y-auto overflow-x-auto flex-grow rounded-lg">
