@@ -1,21 +1,31 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
 const tutorialQuestions = [
   {
     id: 1,
     text: "Selamat datang di Tutorial! Ini adalah contoh tampilan soal. Untuk menjawab, pilih salah satu opsi di bawah ini. Coba klik opsi A.",
-    options: ['Ini opsi A (Klik aku)', 'Ini opsi B', 'Ini opsi C', 'Ini opsi D', 'Ini opsi E']
+    options: ['Ini opsi A (Klik aku)', 'Ini opsi B', 'Ini opsi C', 'Ini opsi D', 'Ini opsi E'],
+    hasHint: false
   },
   {
     id: 2,
-    text: "Bagus! Di sisi kanan, kamu bisa melihat navigasi soal. Nomor soal yang sudah dijawab akan berwarna biru. Coba pilih opsi mana saja untuk soal ini.",
-    options: ['Pilihan A', 'Pilihan B', 'Pilihan C', 'Pilihan D', 'Pilihan E']
+    text: "Terkadang, sebuah soal memiliki petunjuk visual atau gambar. Coba lihat tombol 'Hint' berwarna kuning di bagian bawah. Tombol itu sekarang aktif! Klik tombol 'Hint' untuk memunculkan gambar di sisi kiri.",
+    options: ['Wah, keren!', 'Gambarnya muncul!', 'Sangat interaktif', 'Paham', 'Luar Biasa'],
+    hasHint: true,
+    hintImage: 'Gambar Ilustrasi/Grafik'
   },
   {
     id: 3,
-    text: "Kamu juga bisa kembali ke soal sebelumnya menggunakan tombol 'Kembali' atau dengan mengeklik nomor di panel kanan. Jika sudah paham, pilih salah satu opsi dan klik 'Selesaikan Tutorial'.",
-    options: ['Saya Paham', 'Jelas', 'Sangat Jelas', 'Mengerti', 'Siap Ujian']
+    text: "Bagus! Di sisi kanan, kamu bisa melihat navigasi soal. Nomor soal yang sudah dijawab akan berwarna biru.",
+    options: ['Pilihan A', 'Pilihan B', 'Pilihan C', 'Pilihan D', 'Pilihan E'],
+    hasHint: false
+  },
+  {
+    id: 4,
+    text: "Kamu juga bisa melompat ke soal mana pun mengeklik nomor di panel kanan. Jika sudah paham, pilih salah satu opsi dan klik 'Selesaikan Tutorial'.",
+    options: ['Saya Paham', 'Jelas', 'Sangat Jelas', 'Mengerti', 'Siap Ujian'],
+    hasHint: false
   }
 ]
 
@@ -25,9 +35,15 @@ export const Tutorial = () => {
   
   const [currentIdx, setCurrentIdx] = useState(0)
   const [answers, setAnswers] = useState<Record<number, number>>({})
+  const [showHint, setShowHint] = useState(false)
 
   const total = tutorialQuestions.length
   const q = tutorialQuestions[currentIdx]
+
+  // Reset hint when changing questions
+  useEffect(() => {
+    setShowHint(false)
+  }, [currentIdx])
 
   const handleSelect = (optionIdx: number) => {
     setAnswers(prev => ({ ...prev, [currentIdx]: optionIdx }))
@@ -49,11 +65,38 @@ export const Tutorial = () => {
       </div>
 
       {/* Main Test Layout */}
-      <div className="flex-grow flex min-h-0">
+      <div className="flex-grow flex min-h-0 relative overflow-hidden">
         
-        {/* Left Side: Question Area (75%) */}
-        <div className="flex-1 flex flex-col min-w-0 bg-primary/5">
-          {/* Question Content */}
+        {/* Animated Hint Panel (Left) */}
+        <div 
+          className={`transition-all duration-500 ease-out border-primary/20 bg-neutral-50 flex flex-col shrink-0 overflow-hidden ${
+            showHint ? 'w-full md:w-[400px] border-r opacity-100' : 'w-0 border-r-0 opacity-0'
+          }`}
+        >
+          <div className="p-6 w-full h-full flex flex-col min-w-[300px]">
+            <div className="flex justify-between items-center mb-4 shrink-0">
+              <h3 className="font-bold text-dark text-lg">Petunjuk Gambar</h3>
+              <button onClick={() => setShowHint(false)} className="text-neutral-400 hover:text-danger transition-colors cursor-pointer">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-6 h-6">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            <div className="flex-grow rounded-2xl overflow-hidden border-2 border-neutral-200 bg-white shadow-inner flex items-center justify-center p-4">
+              {/* Dummy Image Box */}
+              <div className="w-full h-full bg-neutral-100 rounded-xl flex flex-col items-center justify-center text-neutral-400 border-2 border-dashed border-neutral-300">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-12 h-12 mb-2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
+                </svg>
+                <span className="font-bold text-sm text-center px-4">{q.hintImage}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Center: Question Area */}
+        <div className="flex-1 flex flex-col min-w-0 bg-primary/5 transition-all duration-500">
           <div className="flex-grow p-6 md:p-12 overflow-y-auto">
             
             {/* Tutorial Banner */}
@@ -79,7 +122,7 @@ export const Tutorial = () => {
             <div className="flex flex-col gap-3">
               {q.options.map((opt, i) => {
                 const isSelected = answers[currentIdx] === i
-                const letter = String.fromCharCode(65 + i) // A, B, C, D, E
+                const letter = String.fromCharCode(65 + i)
 
                 return (
                   <button
@@ -110,14 +153,33 @@ export const Tutorial = () => {
             <button
               onClick={() => setCurrentIdx(prev => Math.max(0, prev - 1))}
               disabled={currentIdx === 0}
-              className="px-6 py-2.5 rounded-xl font-bold text-dark border-2 border-neutral-200 hover:bg-neutral-100 disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer"
+              className="px-6 py-2.5 rounded-xl font-bold text-dark border-2 border-neutral-200 hover:bg-neutral-100 disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer w-[140px]"
             >
               Kembali
             </button>
+            
+            {/* HINT BUTTON */}
+            <button
+              onClick={() => setShowHint(!showHint)}
+              disabled={!q.hasHint}
+              className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold border-2 transition-all ${
+                q.hasHint
+                  ? showHint 
+                    ? 'bg-warning/20 border-warning text-warning-800 hover:bg-warning/30 cursor-pointer'
+                    : 'bg-warning text-warning-900 border-warning hover:bg-warning/90 cursor-pointer shadow-sm'
+                  : 'bg-neutral-100 border-neutral-200 text-neutral-400 cursor-not-allowed opacity-60'
+              }`}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 0 0 1.5-.189m-1.5.189a6.01 6.01 0 0 1-1.5-.189m3.75 7.478a12.06 12.06 0 0 1-4.5 0m3.75 2.383a14.406 14.406 0 0 1-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 1 0-7.516 0c.85.493 1.509 1.333 1.509 2.316V18" />
+              </svg>
+              {showHint ? 'Tutup Hint' : 'Buka Hint'}
+            </button>
+
             <button
               onClick={() => setCurrentIdx(prev => Math.min(total - 1, prev + 1))}
               disabled={currentIdx === total - 1}
-              className="px-6 py-2.5 rounded-xl font-bold text-light bg-primary border-2 border-primary hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer"
+              className="px-6 py-2.5 rounded-xl font-bold text-light bg-primary border-2 border-primary hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer w-[140px]"
             >
               Selanjutnya
             </button>
@@ -125,7 +187,7 @@ export const Tutorial = () => {
         </div>
 
         {/* Right Side: Navigation Grid (25%) */}
-        <div className="w-80 shrink-0 border-l border-primary/20 bg-light flex flex-col hidden lg:flex">
+        <div className="w-80 shrink-0 border-l border-primary/20 bg-light flex flex-col hidden lg:flex transition-all duration-500">
           
           <div className="p-6 shrink-0 border-b border-primary/10">
             <h3 className="font-bold text-lg mb-2">Navigasi Soal</h3>
@@ -141,7 +203,7 @@ export const Tutorial = () => {
 
           <div className="flex-grow p-6 overflow-y-auto">
             <div className="grid grid-cols-5 gap-2">
-              {tutorialQuestions.map((_, i) => {
+              {tutorialQuestions.map((qItem, i) => {
                 const isAnswered = answers[i] !== undefined
                 const isCurrent = currentIdx === i
 
@@ -154,9 +216,11 @@ export const Tutorial = () => {
                   <button
                     key={i}
                     onClick={() => setCurrentIdx(i)}
-                    className={`aspect-square rounded-lg border flex items-center justify-center font-bold text-sm transition-all cursor-pointer ${style} ${isCurrent ? 'ring-2 ring-primary ring-offset-2' : ''}`}
+                    className={`aspect-square rounded-lg border flex items-center justify-center font-bold text-sm transition-all cursor-pointer relative ${style} ${isCurrent ? 'ring-2 ring-primary ring-offset-2' : ''}`}
                   >
                     {i + 1}
+                    {/* Tiny dot to indicate it has a hint */}
+                    {qItem.hasHint && <div className="absolute top-1 right-1 w-1.5 h-1.5 bg-warning rounded-full" />}
                   </button>
                 )
               })}
