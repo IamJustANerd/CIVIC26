@@ -1,10 +1,59 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: 'Oxanium';
+  src: url('./assets/fonts/Oxanium/Oxanium-VariableFont_wght.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Mechsuit';
+  src: url('./assets/fonts/mechsuit/Mechsuit.otf') format('opentype');
+}
+
+@font-face {
+  font-family: 'Nechao Sharp';
+  src: url('./assets/fonts/nechao_sharp/Nechao%20Sharp.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Seona';
+  src: url('./assets/fonts/seona/Seona-DEMO.otf') format('opentype');
+}
+
+@font-face {
+  font-family: 'Slant';
+  src: url('./assets/fonts/slant/SLANT.TTF') format('truetype');
+}
+
 @theme {
-  --color-primary: #aa3bff;
-  --color-primary-dark: #c084fc;
+  --color-primary: #334B89;
+  --color-primary-100: #CAD8FF;
+  --color-primary-200: #7884C8;
+  --color-primary-300: #607DFF;
+  --color-primary-400: #4C6DCF;
+  --color-primary-500: #324ECE;
+  --color-primary-600: #143289;
+  
+  --color-secondary: #F1D302;
+  --color-secondary-alt: #F1D301;
+  
+  --color-danger: #D13631;
+  --color-warning: #ED7F2B;
+  
+  --color-dark: #161925;
+  --color-light: #FDFFFC;
+  
+  --color-neutral-400: #989898;
+  --color-neutral-500: #737373;
+  --color-neutral-600: #454545;
+
   --font-sans: 'Inter', system-ui, sans-serif;
   --font-heading: 'Outfit', system-ui, sans-serif;
+  --font-oxanium: 'Oxanium', system-ui, sans-serif;
+  --font-mechsuit: 'Mechsuit', system-ui, sans-serif;
+  --font-nechao: 'Nechao Sharp', system-ui, sans-serif;
+  --font-seona: 'Seona', system-ui, sans-serif;
+  --font-slant: 'Slant', system-ui, sans-serif;
 }
 
 @layer base {
