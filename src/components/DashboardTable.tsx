@@ -19,6 +19,17 @@ interface StatusBadgeProps {
   type: TestType;
 }
 
+const parseIndonesianDate = (dateStr: string) => {
+  const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember']
+  const cleanStr = dateStr.replace('\n', ' ')
+  const parts = cleanStr.split(' ')
+  if (parts.length < 4) return 0
+  const [day, monthStr, year, time] = parts
+  const monthIdx = months.indexOf(monthStr)
+  if (monthIdx === -1) return 0
+  return new Date(`${year}-${String(monthIdx + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}T${time}:00`).getTime()
+}
+
 export const StatusBadge = ({ status, itemId, type }: StatusBadgeProps) => {
   const navigate = useNavigate()
 
@@ -39,7 +50,7 @@ export const StatusBadge = ({ status, itemId, type }: StatusBadgeProps) => {
     return (
       <button
         onClick={() => navigate(`/pre-tutorial/${type}/${itemId}`)}
-        className="font-oxanium text-xs font-bold text-light bg-warning border-2 border-warning rounded-xl px-3 py-1.5 hover:bg-warning/80 transition-all shadow-sm cursor-pointer"
+        className="font-oxanium text-xs font-bold text-warning border-2 border-warning rounded-xl w-24 h-8 inline-flex items-center justify-center hover:bg-warning hover:text-light transition-all shadow-sm cursor-pointer"
       >
         Lanjutkan
       </button>
@@ -49,7 +60,7 @@ export const StatusBadge = ({ status, itemId, type }: StatusBadgeProps) => {
   return (
     <button
       onClick={() => navigate(`/pre-tutorial/${type}/${itemId}`)}
-      className="font-oxanium text-xs font-bold text-light bg-danger border-2 border-danger rounded-xl px-3 py-1.5 hover:bg-danger/80 transition-all shadow-sm cursor-pointer"
+      className="font-oxanium text-xs font-bold text-danger border-2 border-danger rounded-xl w-24 h-8 inline-flex items-center justify-center hover:bg-danger hover:text-light transition-all shadow-sm cursor-pointer"
     >
       Kerjakan
     </button>
@@ -67,6 +78,11 @@ interface DashboardTableProps {
 export const DashboardTable = ({ title, type, data, compact = false, hideSeeAll = false }: DashboardTableProps) => {
   const navigate = useNavigate()
 
+  // Sort by date newest to oldest
+  const sortedData = [...data].sort((a, b) => {
+    return parseIndonesianDate(b.start) - parseIndonesianDate(a.start)
+  })
+
   return (
     <div className="bg-light border-2 border-primary rounded-3xl p-5 md:p-6 shadow-md flex flex-col min-h-0 h-full">
       <div className="flex justify-between items-center mb-4 shrink-0">
@@ -74,14 +90,14 @@ export const DashboardTable = ({ title, type, data, compact = false, hideSeeAll 
         {!hideSeeAll && (
           <button
             onClick={() => navigate(`/${type}`)}
-            className="font-oxanium text-xs md:text-sm font-bold text-dark border-2 border-primary rounded-xl px-4 py-1.5 md:px-5 md:py-2 hover:bg-primary hover:text-light transition-all shadow-sm cursor-pointer"
+            className="font-oxanium text-xs md:text-sm font-bold text-primary border-2 border-primary rounded-xl px-4 py-1.5 md:px-5 md:py-2 hover:bg-primary hover:text-light transition-all shadow-sm cursor-pointer"
           >
             Selengkapnya
           </button>
         )}
       </div>
 
-      <div className="overflow-y-auto overflow-x-auto flex-grow rounded-lg">
+      <div className="overflow-y-auto overflow-x-hidden flex-grow rounded-lg">
         <table className="w-full table-fixed text-left font-oxanium text-sm md:text-base border-collapse text-black">
           <thead className="sticky top-0 bg-light z-10">
             <tr className="text-dark">
@@ -92,7 +108,7 @@ export const DashboardTable = ({ title, type, data, compact = false, hideSeeAll 
             </tr>
           </thead>
           <tbody>
-            {data.map((item, i) => (
+            {sortedData.map((item, i) => (
               <tr key={item.id} className={`border-t border-primary/20 ${i % 2 === 0 ? 'bg-primary/5' : 'bg-transparent'}`}>
                 <td className="py-3 px-2 md:px-3 truncate">{item.name}</td>
                 <td className="py-3 px-2 md:px-3 text-center whitespace-pre-line leading-tight">{item.start}</td>

@@ -9,8 +9,24 @@ interface AdminDashboardTableProps {
   hideSeeAll?: boolean;
 }
 
+const parseIndonesianDate = (dateStr: string) => {
+  const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember']
+  const cleanStr = dateStr.replace('\n', ' ')
+  const parts = cleanStr.split(' ')
+  if (parts.length < 4) return 0
+  const [day, monthStr, year, time] = parts
+  const monthIdx = months.indexOf(monthStr)
+  if (monthIdx === -1) return 0
+  return new Date(`${year}-${String(monthIdx + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}T${time}:00`).getTime()
+}
+
 export const AdminDashboardTable = ({ title, type, data, compact = false, hideSeeAll = false }: AdminDashboardTableProps) => {
   const navigate = useNavigate()
+
+  // Sort by date newest to oldest
+  const sortedData = [...data].sort((a, b) => {
+    return parseIndonesianDate(b.start) - parseIndonesianDate(a.start)
+  })
 
   return (
     <div className="bg-light border-2 border-primary rounded-3xl p-5 md:p-6 shadow-md flex flex-col min-h-0 h-full">
@@ -19,14 +35,14 @@ export const AdminDashboardTable = ({ title, type, data, compact = false, hideSe
         {!hideSeeAll && (
           <button
             onClick={() => navigate(`/admin/${type}`)}
-            className="font-oxanium text-xs md:text-sm font-bold text-dark border-2 border-primary rounded-xl px-4 py-1.5 md:px-5 md:py-2 hover:bg-primary hover:text-light transition-all shadow-sm cursor-pointer"
+            className="font-oxanium text-xs md:text-sm font-bold text-primary border-2 border-primary rounded-xl px-4 py-1.5 md:px-5 md:py-2 hover:bg-primary hover:text-light transition-all shadow-sm cursor-pointer"
           >
             Lihat Semua
           </button>
         )}
       </div>
 
-      <div className="overflow-y-auto overflow-x-auto flex-grow rounded-lg">
+      <div className="overflow-y-auto overflow-x-hidden flex-grow rounded-lg">
         <table className="w-full table-fixed text-left font-oxanium text-sm md:text-base border-collapse text-black">
           <thead className="sticky top-0 bg-light z-10">
             <tr className="text-dark">
@@ -37,7 +53,7 @@ export const AdminDashboardTable = ({ title, type, data, compact = false, hideSe
             </tr>
           </thead>
           <tbody>
-            {data.map((item, i) => (
+            {sortedData.map((item, i) => (
               <tr key={item.id} className={`border-t border-primary/20 ${i % 2 === 0 ? 'bg-primary/5' : 'bg-transparent'}`}>
                 <td className="py-3 px-2 md:px-3 truncate">{item.name}</td>
                 <td className="py-3 px-2 md:px-3 text-center whitespace-pre-line leading-tight">{item.start}</td>
@@ -45,7 +61,7 @@ export const AdminDashboardTable = ({ title, type, data, compact = false, hideSe
                 <td className="py-3 px-2 md:px-3 text-right">
                   <button
                     onClick={() => alert(`Edit ${type} with id: ${item.id} is not implemented yet.`)}
-                    className="font-oxanium text-xs font-bold text-dark bg-white border-2 border-neutral-300 rounded-xl px-4 py-1.5 hover:border-primary hover:text-primary transition-all shadow-sm cursor-pointer"
+                    className="font-oxanium text-xs font-bold text-primary border-2 border-primary rounded-xl w-24 h-8 inline-flex items-center justify-center hover:bg-primary hover:text-light transition-all shadow-sm cursor-pointer"
                   >
                     Edit
                   </button>
