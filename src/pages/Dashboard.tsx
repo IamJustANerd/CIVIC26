@@ -2,18 +2,7 @@ import { useState, useEffect } from 'react'
 import { Header } from '../components/Header'
 import { DigitBox } from '../components/DigitBox'
 import { DashboardTable } from '../components/DashboardTable'
-
-const dummyTryOuts = [
-  { name: 'Try Out X', start: '24 Agustus 2026\n08:00', end: '24 Agustus 2026\n12:00', status: 'Belum Dimulai' },
-  { name: 'Try Out Z', start: '23 Agustus 2026\n16:00', end: '23 Agustus 2026\n20:00', status: 'Belum Dikerjakan' },
-  { name: 'Try Out Y', start: '22 Agustus 2026\n12:00', end: '22 Agustus 2026\n13:00', status: 'Sudah Dikerjakan' },
-]
-
-const dummyTests = [
-  { name: 'Test X', start: '24 Agustus 2026\n08:00', end: '24 Agustus 2026\n12:00', status: 'Belum Dimulai' },
-  { name: 'Test Z', start: '23 Agustus 2026\n16:00', end: '23 Agustus 2026\n20:00', status: 'Belum Dikerjakan' },
-  { name: 'Test Y', start: '22 Agustus 2026\n12:00', end: '22 Agustus 2026\n13:00', status: 'Sudah Dikerjakan' },
-]
+import { dummyTryOuts, dummyTests } from '../data/examData'
 
 export const Dashboard = () => {
   const [time, setTime] = useState(new Date())
@@ -41,16 +30,16 @@ export const Dashboard = () => {
   const { hours, minutes, seconds } = formatTime(time)
 
   return (
-    <div className="h-screen w-screen overflow-hidden bg-gradient-to-r from-white via-white via-[70%] to-danger p-4 pt-20 md:p-6 md:pt-24 relative flex flex-col">
+    <div className="h-screen w-screen overflow-hidden bg-gradient-to-r from-white via-white via-[70%] to-danger/30 p-4 pt-20 md:p-6 md:pt-24 relative flex flex-col">
       <Header showProfile />
 
-      {/* Dashboard Content Grid (Refactored to Flex for exact 3:7 ratio) */}
+      {/* Dashboard Content Grid */}
       <div className="w-full max-w-7xl mx-auto flex-grow flex flex-col gap-4 md:gap-6 min-h-0">
 
-        {/* Top Section (Greeting & Clock) - 30% height on desktop */}
+        {/* Top Section (Greeting & Clock) - 30% height */}
         <div className="flex flex-col lg:flex-row gap-4 md:gap-6 lg:flex-[3] min-h-0">
           {/* Greeting Card */}
-          <div className="bg-light border-2 border-primary rounded-3xl p-6 md:p-8 shadow-md flex flex-col justify-center h-full w-full lg:w-1/2">
+          <div className="bg-light border-2 border-primary rounded-3xl p-6 md:p-8 shadow-md flex flex-col justify-center w-full lg:w-1/2">
             <h2 className="text-3xl md:text-4xl font-slant text-dark">Halo, Peserta!</h2>
             <p className="font-oxanium text-neutral-600 text-base md:text-lg leading-relaxed">
               Kamu masih punya 2 Try Out dan 2 Test yang belum dikerjakan. Jangan sampai kelewatan ya~
@@ -73,15 +62,16 @@ export const Dashboard = () => {
           </div>
         </div>
 
-        {/* Bottom Section (Tables) - 70% height on desktop */}
+        {/* Bottom Section (Tables) - 70% height */}
         <div className="flex flex-col lg:flex-row gap-4 md:gap-6 lg:flex-[7] min-h-0">
           <div className="w-full lg:w-1/2 flex flex-col min-h-0">
-            <DashboardTable title="Try Out" data={dummyTryOuts} />
+            <DashboardTable title="Try Out" type="tryout" data={dummyTryOuts} />
           </div>
           <div className="w-full lg:w-1/2 flex flex-col min-h-0">
-            <DashboardTable title="Test" data={dummyTests} />
+            <DashboardTable title="Test" type="test" data={dummyTests} />
           </div>
         </div>
+
       </div>
 
       {/* Footer */}
