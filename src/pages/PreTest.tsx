@@ -72,11 +72,11 @@ export const PreTest = () => {
         {/* Main two-column card area */}
         <div className="flex-grow flex flex-col lg:flex-row gap-4 md:gap-6 min-h-0">
 
-          {/* Left: Rules & Info */}
-          <div className="bg-light border-2 border-primary rounded-3xl p-6 md:p-8 shadow-md flex flex-col w-full lg:w-1/2 overflow-y-auto">
-            <h2 className="font-slant text-2xl md:text-3xl text-dark mb-6">Informasi Ujian</h2>
+          {/* Left: Info */}
+          <div className="bg-light border-2 border-primary rounded-3xl p-6 md:p-8 shadow-md flex flex-col w-full lg:w-1/2 overflow-y-auto justify-center">
+            <h2 className="font-slant text-2xl md:text-3xl text-dark mb-6 text-center">Informasi Ujian</h2>
 
-            <div className="grid grid-cols-2 gap-4 mb-8">
+            <div className="grid grid-cols-2 gap-4">
               <div className="bg-primary/5 rounded-2xl p-4">
                 <p className="font-oxanium text-xs text-neutral-400 mb-1">Jenis</p>
                 <p className="font-oxanium font-bold text-dark text-lg">{title}</p>
@@ -94,28 +94,12 @@ export const PreTest = () => {
                 <p className="font-oxanium font-bold text-dark text-sm">{item.start.replace('\n', ' ')}</p>
               </div>
             </div>
-
-            <h3 className="font-slant text-xl text-dark mb-3">Peraturan</h3>
-            <ul className="font-oxanium text-sm text-neutral-600 space-y-2.5">
-              {[
-                'Pastikan koneksi internet kamu stabil sebelum memulai.',
-                'Timer akan berjalan begitu kamu menekan "Mulai Ujian".',
-                'Jawaban tidak dapat diubah setelah disubmit.',
-                'Selesaikan semua soal sebelum waktu habis.',
-                'Dilarang menggunakan alat bantu eksternal.',
-              ].map((rule, i) => (
-                <li key={i} className="flex items-start gap-2.5">
-                  <span className="mt-0.5 shrink-0 w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold">{i + 1}</span>
-                  {rule}
-                </li>
-              ))}
-            </ul>
           </div>
 
           {/* Right: Countdown & CTA */}
           <div className="bg-light border-2 border-primary rounded-3xl p-6 md:p-8 shadow-md flex flex-col items-center justify-center w-full lg:w-1/2 gap-6">
             <div className="text-center">
-              <p className="font-oxanium text-neutral-400 text-sm mb-2">Sisa Waktu Ujian</p>
+              <p className="font-oxanium text-neutral-400 text-sm mb-2">Sisa Waktu Mulai Ujian</p>
               <p className="font-slant text-5xl md:text-6xl text-danger tracking-widest">
                 {timeLeft || '--:--:--'}
               </p>
@@ -129,7 +113,7 @@ export const PreTest = () => {
                 Kembali ke Dashboard
               </button>
               <button
-                onClick={() => alert('Navigating to the test page — to be implemented!')}
+                onClick={() => navigate(`/test-session/${examType}/${id}`)}
                 className="w-full font-oxanium text-base font-bold text-light bg-danger py-3 rounded-xl border-2 border-danger hover:bg-danger/80 transition-all shadow-md cursor-pointer"
               >
                 Mulai Ujian

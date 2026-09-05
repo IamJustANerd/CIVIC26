@@ -38,7 +38,7 @@ export const StatusBadge = ({ status, itemId, type }: StatusBadgeProps) => {
   if (status === 'Sedang Dikerjakan') {
     return (
       <button
-        onClick={() => navigate(`/pre-test/${type}/${itemId}`)}
+        onClick={() => navigate(`/pre-tutorial/${type}/${itemId}`)}
         className="font-oxanium text-xs font-bold text-light bg-warning border-2 border-warning rounded-xl px-3 py-1.5 hover:bg-warning/80 transition-all shadow-sm cursor-pointer"
       >
         Lanjutkan
@@ -48,7 +48,7 @@ export const StatusBadge = ({ status, itemId, type }: StatusBadgeProps) => {
   // Belum Dikerjakan
   return (
     <button
-      onClick={() => navigate(`/pre-test/${type}/${itemId}`)}
+      onClick={() => navigate(`/pre-tutorial/${type}/${itemId}`)}
       className="font-oxanium text-xs font-bold text-light bg-danger border-2 border-danger rounded-xl px-3 py-1.5 hover:bg-danger/80 transition-all shadow-sm cursor-pointer"
     >
       Kerjakan
