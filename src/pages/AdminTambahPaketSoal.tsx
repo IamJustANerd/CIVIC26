@@ -1,16 +1,20 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AdminHeader } from '../components/AdminHeader'
 
 interface Choice {
   id: string;
   text: string;
+  image?: string | null;
   isCorrect: boolean;
 }
 
 interface Question {
   id: string;
   text: string;
+  images: string[];
+  scores: { benar: number; salah: number; kosong: number };
+  acakPilihan: boolean;
   choices: Choice[];
 }
 
@@ -20,13 +24,21 @@ export const AdminTambahPaketSoal = () => {
   const [paketName, setPaketName] = useState('')
   const [paketDescription, setPaketDescription] = useState('')
   
+  const [cheatsheetImage, setCheatsheetImage] = useState<string | null>(null)
+  const [acakSoal, setAcakSoal] = useState(false)
+  
+  const cheatsheetInputRef = useRef<HTMLInputElement>(null)
+
   const [questions, setQuestions] = useState<Question[]>([
     {
       id: crypto.randomUUID(),
       text: '',
+      images: [],
+      scores: { benar: 10, salah: 0, kosong: 0 },
+      acakPilihan: false,
       choices: [
-        { id: crypto.randomUUID(), text: '', isCorrect: false },
-        { id: crypto.randomUUID(), text: '', isCorrect: false },
+        { id: crypto.randomUUID(), text: '', image: null, isCorrect: false },
+        { id: crypto.randomUUID(), text: '', image: null, isCorrect: false },
       ]
     }
   ])
@@ -37,9 +49,12 @@ export const AdminTambahPaketSoal = () => {
       {
         id: crypto.randomUUID(),
         text: '',
+        images: [],
+        scores: { benar: 10, salah: 0, kosong: 0 },
+        acakPilihan: false,
         choices: [
-          { id: crypto.randomUUID(), text: '', isCorrect: false },
-          { id: crypto.randomUUID(), text: '', isCorrect: false },
+          { id: crypto.randomUUID(), text: '', image: null, isCorrect: false },
+          { id: crypto.randomUUID(), text: '', image: null, isCorrect: false },
         ]
       }
     ])
@@ -52,13 +67,81 @@ export const AdminTambahPaketSoal = () => {
   const handleQuestionTextChange = (qId: string, text: string) => {
     setQuestions(questions.map(q => q.id === qId ? { ...q, text } : q))
   }
+  
+  const handleQuestionScoreChange = (qId: string, field: 'benar' | 'salah' | 'kosong', value: number) => {
+    setQuestions(questions.map(q => {
+      if (q.id === qId) {
+        return { ...q, scores: { ...q.scores, [field]: value } }
+      }
+      return q
+    }))
+  }
+  
+  const handleQuestionImageUpload = (qId: string, e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const newFiles = Array.from(e.target.files)
+      setQuestions(questions.map(q => {
+        if (q.id === qId) {
+          const availableSlots = 3 - q.images.length;
+          const filesToAdd = newFiles.slice(0, availableSlots);
+          const newImageUrls = filesToAdd.map(f => URL.createObjectURL(f));
+          return { ...q, images: [...q.images, ...newImageUrls] }
+        }
+        return q
+      }))
+    }
+    e.target.value = ''
+  }
+
+  const handleRemoveQuestionImage = (qId: string, imgIndex: number) => {
+    setQuestions(questions.map(q => {
+      if (q.id === qId) {
+        const newImages = [...q.images]
+        newImages.splice(imgIndex, 1)
+        return { ...q, images: newImages }
+      }
+      return q
+    }))
+  }
+
+  const handleChoiceImageUpload = (qId: string, cId: string, e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const fileUrl = URL.createObjectURL(e.target.files[0])
+      setQuestions(questions.map(q => {
+        if (q.id === qId) {
+          return {
+            ...q,
+            choices: q.choices.map(c => c.id === cId ? { ...c, image: fileUrl } : c)
+          }
+        }
+        return q
+      }))
+    }
+    e.target.value = ''
+  }
+
+  const handleRemoveChoiceImage = (qId: string, cId: string) => {
+    setQuestions(questions.map(q => {
+      if (q.id === qId) {
+        return {
+          ...q,
+          choices: q.choices.map(c => c.id === cId ? { ...c, image: null } : c)
+        }
+      }
+      return q
+    }))
+  }
+  
+  const handleToggleAcakPilihan = (qId: string) => {
+    setQuestions(questions.map(q => q.id === qId ? { ...q, acakPilihan: !q.acakPilihan } : q))
+  }
 
   const handleAddChoice = (qId: string) => {
     setQuestions(questions.map(q => {
       if (q.id === qId && q.choices.length < 5) {
         return {
           ...q,
-          choices: [...q.choices, { id: crypto.randomUUID(), text: '', isCorrect: false }]
+          choices: [...q.choices, { id: crypto.randomUUID(), text: '', image: null, isCorrect: false }]
         }
       }
       return q
@@ -94,7 +177,6 @@ export const AdminTambahPaketSoal = () => {
       if (q.id === qId) {
         return {
           ...q,
-          // If we want only one correct answer per question:
           choices: q.choices.map(c => ({
             ...c,
             isCorrect: c.id === cId
@@ -104,28 +186,48 @@ export const AdminTambahPaketSoal = () => {
       return q
     }))
   }
+  
+  const handleCheatsheetUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setCheatsheetImage(URL.createObjectURL(e.target.files[0]))
+    }
+  }
+  
+  const handleRemoveCheatsheet = () => {
+    setCheatsheetImage(null)
+    if (cheatsheetInputRef.current) {
+      cheatsheetInputRef.current.value = ''
+    }
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    // Doing nothing for now as per instructions
-    console.log({ paketName, paketDescription, questions })
+    console.log({ paketName, paketDescription, cheatsheetImage, acakSoal, questions })
   }
+
+  const totalScore = questions.reduce((acc, q) => acc + (q.scores.benar || 0), 0)
 
   return (
     <div className="min-h-screen w-full overflow-x-hidden bg-gradient-to-r from-white via-white via-[70%] to-danger/30 p-4 pt-20 md:p-6 md:pt-24 relative flex flex-col font-oxanium pb-20">
       <AdminHeader />
 
       <div className="flex-grow flex flex-col items-center w-full max-w-5xl mx-auto pt-8">
-        <div className="w-full flex items-center gap-4 mb-8 animate-in slide-in-from-left duration-500">
-          <button 
-            onClick={() => navigate('/admin/master')}
-            className="p-2 bg-white rounded-full shadow-md text-primary hover:bg-primary hover:text-white transition-colors cursor-pointer border-2 border-primary/20"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-6 h-6">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
-            </svg>
-          </button>
-          <h1 className="font-slant text-4xl text-dark">TAMBAH PAKET SOAL</h1>
+        <div className="w-full flex items-center justify-between mb-8 animate-in slide-in-from-left duration-500">
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={() => navigate('/admin/master')}
+              className="p-2 bg-white rounded-full shadow-md text-primary hover:bg-primary hover:text-white transition-colors cursor-pointer border-2 border-primary/20"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-6 h-6">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+              </svg>
+            </button>
+            <h1 className="font-slant text-4xl text-dark">TAMBAH PAKET SOAL</h1>
+          </div>
+          <div className="bg-white px-4 py-2 rounded-xl border-2 border-primary/20 shadow-sm flex items-center gap-2">
+            <span className="text-sm font-bold text-neutral-500">Total Bobot:</span>
+            <span className="text-xl font-bold text-primary">{totalScore}</span>
+          </div>
         </div>
 
         <form onSubmit={handleSubmit} className="w-full space-y-6">
@@ -159,35 +261,182 @@ export const AdminTambahPaketSoal = () => {
               </div>
             </div>
           </div>
+          
+          {/* Cheatsheet Section */}
+          <div className="bg-white rounded-3xl shadow-xl p-6 md:p-10 border-2 border-primary/20">
+            <h2 className="text-2xl font-bold text-dark mb-4 border-b-2 border-neutral-100 pb-4">Cheatsheet</h2>
+            <p className="text-sm text-neutral-500 mb-4">Tambahkan gambar referensi (cheatsheet) yang dapat dilihat peserta sebelum mengerjakan soal.</p>
+            
+            {cheatsheetImage ? (
+              <div className="relative inline-block border-2 border-neutral-200 rounded-xl overflow-hidden shadow-sm group">
+                <img src={cheatsheetImage} alt="Cheatsheet" className="max-h-64 object-contain" />
+                <div className="absolute inset-0 bg-dark/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
+                  <button
+                    type="button"
+                    onClick={handleRemoveCheatsheet}
+                    className="bg-danger text-white p-3 rounded-full hover:bg-danger/80 transition-colors shadow-lg cursor-pointer flex items-center gap-2"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                    </svg>
+                    Hapus
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <label className="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-primary/50 rounded-xl bg-primary/5 hover:bg-primary/10 transition-colors cursor-pointer text-primary">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8 mb-2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                </svg>
+                <span className="font-bold text-sm">Unggah Cheatsheet (Opsional)</span>
+                <span className="text-xs text-neutral-500 mt-1">Format: JPG, PNG</span>
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  className="hidden" 
+                  ref={cheatsheetInputRef}
+                  onChange={handleCheatsheetUpload}
+                />
+              </label>
+            )}
+          </div>
+          
+          {/* Acak Soal Toggle */}
+          <div className="bg-white rounded-3xl shadow-md p-6 border-2 border-primary/20 flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-bold text-dark">Acak Urutan Soal</h3>
+              <p className="text-sm text-neutral-500">Jika diaktifkan, urutan soal akan diacak untuk setiap peserta.</p>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input 
+                type="checkbox" 
+                value="" 
+                className="sr-only peer"
+                checked={acakSoal}
+                onChange={() => setAcakSoal(!acakSoal)}
+              />
+              <div className="w-14 h-7 bg-neutral-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-primary"></div>
+            </label>
+          </div>
 
           {/* Questions Section */}
           <div className="space-y-6">
             {questions.map((q, qIndex) => (
               <div key={q.id} className="bg-white rounded-3xl shadow-xl p-6 md:p-8 border-2 border-primary/20 relative animate-in slide-in-from-bottom-4 duration-500">
                 
-                <div className="flex justify-between items-center mb-4 border-b-2 border-neutral-100 pb-4">
-                  <h3 className="text-xl font-bold text-dark">Soal {qIndex + 1}</h3>
-                  <button 
-                    type="button"
-                    onClick={() => handleRemoveQuestion(q.id)}
-                    className="p-2 text-neutral-400 hover:text-danger hover:bg-danger/10 rounded-full transition-colors"
-                    title="Hapus Soal"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-                    </svg>
-                  </button>
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4 border-b-2 border-neutral-100 pb-4">
+                  <div className="flex items-center gap-4">
+                    <h3 className="text-xl font-bold text-dark">Soal {qIndex + 1}</h3>
+                    
+                    <div className="flex items-center gap-3 bg-neutral-50 px-3 py-1.5 rounded-lg border-2 border-neutral-200 flex-wrap">
+                      <div className="flex items-center gap-2">
+                        <label className="text-xs font-bold text-primary">Benar</label>
+                        <input 
+                          type="number"
+                          value={q.scores.benar}
+                          onChange={(e) => handleQuestionScoreChange(q.id, 'benar', Number(e.target.value))}
+                          className="w-12 bg-white text-dark font-bold focus:outline-none text-center border rounded-md"
+                        />
+                      </div>
+                      <div className="flex items-center gap-2 border-l border-neutral-300 pl-3">
+                        <label className="text-xs font-bold text-danger">Salah</label>
+                        <input 
+                          type="number"
+                          value={q.scores.salah}
+                          onChange={(e) => handleQuestionScoreChange(q.id, 'salah', Number(e.target.value))}
+                          className="w-12 bg-white text-dark font-bold focus:outline-none text-center border rounded-md"
+                        />
+                      </div>
+                      <div className="flex items-center gap-2 border-l border-neutral-300 pl-3">
+                        <label className="text-xs font-bold text-neutral-500">Kosong</label>
+                        <input 
+                          type="number"
+                          value={q.scores.kosong}
+                          onChange={(e) => handleQuestionScoreChange(q.id, 'kosong', Number(e.target.value))}
+                          className="w-12 bg-white text-dark font-bold focus:outline-none text-center border rounded-md"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end">
+                    <div className="flex items-center gap-3 bg-neutral-50 px-3 py-1.5 rounded-lg border-2 border-neutral-100">
+                      <label className="text-xs font-bold text-neutral-600 cursor-pointer" htmlFor={`acak-pilihan-${q.id}`}>
+                        Acak Pilihan Ganda
+                      </label>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input 
+                          type="checkbox" 
+                          id={`acak-pilihan-${q.id}`}
+                          className="sr-only peer"
+                          checked={q.acakPilihan}
+                          onChange={() => handleToggleAcakPilihan(q.id)}
+                        />
+                        <div className="w-9 h-5 bg-neutral-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+                      </label>
+                    </div>
+
+                    <button 
+                      type="button"
+                      onClick={() => handleRemoveQuestion(q.id)}
+                      className="p-2 text-neutral-400 hover:text-danger hover:bg-danger/10 rounded-full transition-colors"
+                      title="Hapus Soal"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
 
-                <div className="mb-6">
-                  <label className="block text-sm font-bold text-dark mb-1">Pertanyaan</label>
-                  <textarea 
-                    value={q.text}
-                    onChange={(e) => handleQuestionTextChange(q.id, e.target.value)}
-                    placeholder="Tuliskan pertanyaan disini..."
-                    className="w-full px-4 py-3 rounded-xl border-2 border-neutral-200 focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/10 transition-all text-dark min-h-[80px]"
-                    required
-                  />
+                <div className="mb-6 space-y-4">
+                  <div>
+                    <label className="block text-sm font-bold text-dark mb-1">Pertanyaan</label>
+                    <textarea 
+                      value={q.text}
+                      onChange={(e) => handleQuestionTextChange(q.id, e.target.value)}
+                      placeholder="Tuliskan pertanyaan disini..."
+                      className="w-full px-4 py-3 rounded-xl border-2 border-neutral-200 focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/10 transition-all text-dark min-h-[80px]"
+                      required
+                    />
+                  </div>
+
+                  <div className="flex flex-wrap gap-4">
+                    {q.images.map((imgUrl, imgIndex) => (
+                      <div key={imgIndex} className="relative inline-block border-2 border-neutral-200 rounded-xl overflow-hidden shadow-sm group bg-neutral-50 w-fit">
+                        <img src={imgUrl} alt={`Soal ${qIndex + 1} Gambar ${imgIndex + 1}`} className="h-32 object-contain" />
+                        <div className="absolute inset-0 bg-dark/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveQuestionImage(q.id, imgIndex)}
+                            className="bg-danger text-white p-2 rounded-full hover:bg-danger/80 transition-colors shadow-lg cursor-pointer"
+                            title="Hapus Gambar"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                    
+                    {q.images.length < 3 && (
+                      <label className="inline-flex flex-col items-center justify-center h-32 px-6 border-2 border-dashed border-primary/50 rounded-xl text-sm font-bold text-primary hover:bg-primary/5 transition-colors cursor-pointer w-fit bg-white">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6 mb-1">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                        </svg>
+                        Tambah Gambar
+                        <span className="text-xs text-primary/70 font-normal mt-1">Maks {3 - q.images.length} lagi</span>
+                        <input 
+                          type="file" 
+                          accept="image/*" 
+                          multiple
+                          className="hidden" 
+                          onChange={(e) => handleQuestionImageUpload(q.id, e)}
+                        />
+                      </label>
+                    )}
+                  </div>
                 </div>
 
                 <div className="space-y-3">
@@ -212,7 +461,7 @@ export const AdminTambahPaketSoal = () => {
                         </label>
                       </div>
 
-                      <div className="flex-grow">
+                      <div className="flex-grow flex flex-col gap-2">
                         <input 
                           type="text" 
                           value={c.text}
@@ -221,6 +470,38 @@ export const AdminTambahPaketSoal = () => {
                           className="w-full px-3 py-2 rounded-lg border-2 border-neutral-100 focus:border-primary focus:outline-none focus:bg-white bg-neutral-50 transition-all text-dark"
                           required
                         />
+                        
+                        {c.image ? (
+                          <div className="relative inline-block border-2 border-neutral-200 rounded-lg overflow-hidden shadow-sm group bg-white w-fit">
+                            <img src={c.image} alt={`Pilihan ${String.fromCharCode(65 + cIndex)}`} className="h-20 object-contain" />
+                            <div className="absolute inset-0 bg-dark/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveChoiceImage(q.id, c.id)}
+                                className="bg-danger text-white p-1.5 rounded-full hover:bg-danger/80 transition-colors shadow-lg cursor-pointer"
+                                title="Hapus Gambar Pilihan"
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                                </svg>
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <label className="inline-flex items-center gap-1.5 px-3 py-1.5 border-2 border-dashed border-primary/40 rounded-lg text-xs font-bold text-primary hover:bg-primary/5 transition-colors cursor-pointer w-fit bg-white">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-3.5 h-3.5">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                            </svg>
+                            Gambar
+                            <input 
+                              type="file" 
+                              accept="image/*" 
+                              className="hidden" 
+                              onChange={(e) => handleChoiceImageUpload(q.id, c.id, e)}
+                            />
+                          </label>
+                        )}
+                        
                         {c.isCorrect && (
                           <span className="text-xs font-bold text-primary mt-1 inline-block">Benar (Kunci Jawaban)</span>
                         )}
@@ -264,7 +545,7 @@ export const AdminTambahPaketSoal = () => {
           <button 
             type="button"
             onClick={handleAddQuestion}
-            className="w-full py-4 border-2 border-dashed border-primary text-primary font-bold rounded-2xl hover:bg-primary/5 transition-all flex items-center justify-center gap-2 cursor-pointer"
+            className="w-full py-4 border-2 border-dashed border-primary text-primary font-bold rounded-2xl hover:bg-primary/5 transition-all flex items-center justify-center gap-2 cursor-pointer bg-white/50"
           >
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />

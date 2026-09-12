@@ -13,21 +13,33 @@ export const AdminDetailTestParticipant = () => {
       <AdminHeader />
 
       <div className="flex-grow flex flex-col items-center w-full max-w-5xl mx-auto pt-8">
-        <div className="w-full flex items-center gap-4 mb-8 animate-in slide-in-from-left duration-500">
-          <button 
-            onClick={() => navigate('/admin/detail-test')}
-            className="p-2 bg-white rounded-full shadow-md text-primary hover:bg-primary hover:text-white transition-colors cursor-pointer border-2 border-primary/20"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-6 h-6">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
-            </svg>
-          </button>
-          <div>
-            <h1 className="font-slant text-3xl md:text-4xl text-dark uppercase">{testInfo ? testInfo.name : 'DETAIL PESERTA UJIAN'}</h1>
-            {testInfo && (
-              <p className="text-neutral-500 font-bold text-sm mt-1">Data Peserta</p>
-            )}
+        <div className="w-full flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8 animate-in slide-in-from-left duration-500">
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={() => navigate('/admin/detail-test')}
+              className="p-2 bg-white rounded-full shadow-md text-primary hover:bg-primary hover:text-white transition-colors cursor-pointer border-2 border-primary/20"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-6 h-6">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+              </svg>
+            </button>
+            <div>
+              <h1 className="font-slant text-3xl md:text-4xl text-dark uppercase">{testInfo ? testInfo.name : 'DETAIL PESERTA UJIAN'}</h1>
+              {testInfo && (
+                <p className="text-neutral-500 font-bold text-sm mt-1">Data Peserta</p>
+              )}
+            </div>
           </div>
+          
+          <button 
+            onClick={() => alert('Fitur Export Excel akan segera hadir!')}
+            className="flex items-center gap-2 bg-[#21A366] text-white font-bold px-5 py-2.5 rounded-xl shadow-md border-2 border-[#107C41] hover:bg-[#107C41] transition-colors cursor-pointer"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m6.75 12l-3-3m0 0l-3 3m3-3v6m-1.5-15H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+            </svg>
+            Export to Excel
+          </button>
         </div>
 
         <div className="bg-white w-full rounded-3xl shadow-xl p-6 md:p-10 border-2 border-primary/20 animate-in fade-in zoom-in duration-500">

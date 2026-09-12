@@ -17,7 +17,7 @@ export const PreTest = () => {
     if (!item) return
     const tick = () => {
       const now = new Date()
-      const end = new Date()
+      // const end = new Date()
       // Parse end time from item.end string (format: "DD Month YYYY\nHH:mm")
       const parts = item.end.split('\n')
       if (parts.length === 2) {

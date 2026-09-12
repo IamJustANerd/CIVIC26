@@ -1,16 +1,40 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Header } from '../components/Header'
+import { authApi } from '../api/auth.api'
+import { useAuth } from '../context/AuthContext'
 
 export const Login = () => {
-  const [email, setEmail] = useState('')
+  const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [isError, setIsError] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
   const navigate = useNavigate()
+  const { login } = useAuth()
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    navigate('/dashboard')
+    setIsLoading(true)
+    setIsError(false)
+
+    try {
+      const response = await authApi.login(username, password)
+      if (response.success && response.data) {
+        login(response.data.token, response.data.user)
+        if (response.data.user.isAdmin) {
+          navigate('/admin-dashboard')
+        } else {
+          navigate('/dashboard')
+        }
+      } else {
+        setIsError(true)
+      }
+    } catch (error) {
+      console.error('Login failed', error)
+      setIsError(true)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -23,19 +47,19 @@ export const Login = () => {
         <p className="font-oxanium text-neutral-600 text-lg md:text-xl mb-10">Tolong masukkan informasi akunmu</p>
 
         <form onSubmit={handleLogin} className="flex flex-col">
-          {/* Email Field */}
+          {/* Username Field */}
           <div className="mb-5">
             <label className={`block font-oxanium text-xs md:text-sm mb-1 ml-1 ${isError ? 'text-danger' : 'text-primary'}`}>
-              E-mail
+              Username
             </label>
             <input
-              type="email"
-              value={email}
+              type="text"
+              value={username}
               onChange={(e) => {
-                setEmail(e.target.value)
+                setUsername(e.target.value)
                 if (isError) setIsError(false)
               }}
-              placeholder="dummy@example.com"
+              placeholder="dummyusername"
               className={`w-full font-oxanium text-dark px-4 py-3 rounded-lg border focus:outline-none transition-colors placeholder:text-neutral-400 ${isError
                 ? 'border-danger focus:ring-1 focus:ring-danger/50 focus:border-danger'
                 : 'border-primary focus:ring-1 focus:ring-primary/50 focus:border-primary'
@@ -74,7 +98,7 @@ export const Login = () => {
           <div className="h-6 mb-2">
             {isError && (
               <p className="font-oxanium text-danger text-[10px] md:text-xs font-bold transition-opacity">
-                E-mail atau password salah!
+                Username atau password salah!
               </p>
             )}
           </div>
@@ -82,16 +106,21 @@ export const Login = () => {
           {/* Login Button */}
           <button
             type="submit"
-            className="w-full bg-primary hover:bg-primary-600 text-light font-oxanium text-lg py-3 rounded-xl transition-all duration-300 border border-primary-600 shadow-sm hover:shadow-md cursor-pointer"
+            disabled={isLoading}
+            className="w-full bg-primary hover:bg-primary-600 text-light font-oxanium text-lg py-3 rounded-xl transition-all duration-300 border border-primary-600 shadow-sm hover:shadow-md cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed flex justify-center items-center h-[54px]"
           >
-            Login
+            {isLoading ? (
+              <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+            ) : (
+              'Login'
+            )}
           </button>
         </form>
 
         {/* Footer */}
         <div className="mt-4 text-center">
           <p className="font-oxanium text-[10px] text-dark font-bold">
-            ©2026 CIVIC. All rights reserved.
+            © 2026 CESC 2026. All rights reserved.
           </p>
         </div>
       </div>

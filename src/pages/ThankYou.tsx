@@ -1,9 +1,9 @@
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { Header } from '../components/Header'
 
 export const ThankYou = () => {
   const navigate = useNavigate()
-  const { type, id } = useParams<{ type: string; id: string }>()
+  // const { type, id } = useParams<{ type: string; id: string }>()
 
   // In a real app, you might want to fetch the exam name or score here based on type and id
   

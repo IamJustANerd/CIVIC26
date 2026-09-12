@@ -1,18 +1,25 @@
 import { useNavigate } from 'react-router-dom'
 import Logo from '../assets/fonts/Logo.svg'
+import { useAuth } from '../context/AuthContext'
 
 export const AdminHeader = () => {
   const navigate = useNavigate()
+  const { user, logout } = useAuth()
+
+  const handleLogout = () => {
+    logout()
+    navigate('/login')
+  }
 
   return (
     <>
-      <div className="absolute top-4 left-4 md:top-6 md:left-6 flex items-center gap-3">
+      <div className="absolute top-4 left-4 md:top-6 md:left-6 flex items-center gap-3 bg-primary border-2 border-primary-700 rounded-xl px-4 py-2 shadow-md">
         <img src={Logo} alt="CIVIC EXPO Logo" className="w-8 h-8 md:w-10 md:h-10" />
-        <h1 className="text-danger font-slant text-2xl md:text-3xl tracking-wide">CIVIC26</h1>
+        <h1 className="text-danger font-slant text-2xl md:text-3xl tracking-wide">CESC 2026</h1>
       </div>
-      
+
       <div className="absolute top-4 right-4 md:top-6 md:right-6 flex items-center gap-4 md:gap-6">
-        <button 
+        <button
           onClick={() => navigate('/admin/master')}
           className="flex items-center gap-2 bg-primary text-light font-oxanium font-bold px-4 py-2 rounded-xl shadow-md border-2 border-primary hover:bg-primary/90 transition-colors cursor-pointer"
         >
@@ -22,12 +29,27 @@ export const AdminHeader = () => {
           <span className="hidden sm:inline">Admin Tools</span>
         </button>
 
-        <div className="w-10 h-10 md:w-10 md:h-10 rounded-full bg-neutral-600 shadow-sm cursor-pointer hover:bg-neutral-500 transition-colors"></div>
-        <button className="text-dark hover:text-primary transition-colors cursor-pointer">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" />
-          </svg>
-        </button>
+        {user && (
+          <div className="flex items-center gap-4 bg-white/80 backdrop-blur px-4 py-2 rounded-xl shadow-sm border border-neutral-200">
+            <div className="flex flex-col items-end hidden sm:flex">
+              <span className="font-oxanium font-bold text-dark text-sm">{user.name || user.username}</span>
+              <span className="font-oxanium text-xs text-primary font-bold">Admin</span>
+            </div>
+            <div className="w-10 h-10 md:w-10 md:h-10 rounded-full bg-danger/10 text-danger flex items-center justify-center font-bold shadow-sm">
+              {(user.name || user.username).charAt(0).toUpperCase()}
+            </div>
+            
+            <button 
+              onClick={handleLogout}
+              className="text-danger hover:text-danger/80 transition-colors cursor-pointer ml-2"
+              title="Logout"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" />
+              </svg>
+            </button>
+          </div>
+        )}
       </div>
     </>
   )

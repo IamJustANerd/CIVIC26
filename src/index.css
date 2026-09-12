@@ -33,17 +33,18 @@
   --color-primary-400: #4C6DCF;
   --color-primary-500: #324ECE;
   --color-primary-600: #143289;
-  
+  --color-primary-700: #E7A531;
+
   --color-secondary: #F1D302;
   --color-secondary-alt: #F1D301;
-  
+
   --color-danger: #D13631;
   --color-warning: #ED7F2B;
   --color-success: #22C55E;
-  
+
   --color-dark: #161925;
   --color-light: #FDFFFC;
-  
+
   --color-neutral-400: #989898;
   --color-neutral-500: #737373;
   --color-neutral-600: #454545;

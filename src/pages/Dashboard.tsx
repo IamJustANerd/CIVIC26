@@ -30,7 +30,7 @@ export const Dashboard = () => {
   const { hours, minutes, seconds } = formatTime(time)
 
   return (
-    <div className="h-screen w-screen overflow-hidden bg-gradient-to-r from-white via-white via-[70%] to-danger/30 p-4 pt-20 md:p-6 md:pt-24 relative flex flex-col">
+    <div className="h-screen w-screen overflow-hidden bg-gradient-to-r from-white via-white via-[30%] to-primary-100 p-4 pt-20 md:p-6 md:pt-24 relative flex flex-col">
       <Header showProfile />
 
       {/* Dashboard Content Grid */}
@@ -77,7 +77,7 @@ export const Dashboard = () => {
       {/* Footer */}
       <div className="shrink-0 mt-4 text-center w-full">
         <p className="font-oxanium text-[10px] md:text-xs text-dark font-bold">
-          ©2026 CIVIC. All rights reserved.
+          © 2026 CESC 2026. All rights reserved.
         </p>
       </div>
     </div>

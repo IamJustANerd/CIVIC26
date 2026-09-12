@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { AdminHeader } from '../components/AdminHeader'
 import { dummyAccounts } from '../data/examData'
@@ -5,6 +6,7 @@ import { dummyAccounts } from '../data/examData'
 export const AdminDetailAkun = () => {
   const navigate = useNavigate()
   const { id } = useParams<{ id: string }>()
+  const [selectedHistoryDetail, setSelectedHistoryDetail] = useState<any | null>(null)
   
   const account = dummyAccounts.find(acc => acc.id === id)
 
@@ -46,6 +48,7 @@ export const AdminDetailAkun = () => {
                   <th className="py-4 px-4 font-bold text-neutral-500 text-sm uppercase">Durasi</th>
                   <th className="py-4 px-4 font-bold text-neutral-500 text-sm uppercase whitespace-nowrap">Keluar Halaman</th>
                   <th className="py-4 px-4 font-bold text-neutral-500 text-sm uppercase text-center">Skor Akhir</th>
+                  <th className="py-4 px-4 font-bold text-neutral-500 text-sm uppercase text-center">Aksi</th>
                 </tr>
               </thead>
               <tbody>
@@ -66,6 +69,14 @@ export const AdminDetailAkun = () => {
                       ) : (
                         <span className="font-bold text-xs text-warning bg-warning/10 px-3 py-1 rounded-full">Proses</span>
                       )}
+                    </td>
+                    <td className="py-4 px-4 text-center">
+                      <button 
+                        onClick={() => setSelectedHistoryDetail(hist)}
+                        className="text-xs font-bold bg-primary/10 text-primary hover:bg-primary hover:text-white px-3 py-1.5 rounded-lg transition-colors cursor-pointer whitespace-nowrap"
+                      >
+                        Detail
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -92,6 +103,50 @@ export const AdminDetailAkun = () => {
           )}
         </div>
       </div>
+
+      {/* Answer Detail Modal */}
+      {selectedHistoryDetail && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-dark/40 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh] animate-in zoom-in-95 duration-300">
+            
+            <div className="p-6 border-b-2 border-neutral-100 flex justify-between items-center bg-neutral-50">
+              <div>
+                <h3 className="font-bold text-xl text-dark">Detail Jawaban</h3>
+                <p className="text-xs font-bold text-neutral-500 mt-1">{selectedHistoryDetail.testName}</p>
+              </div>
+              <button 
+                onClick={() => setSelectedHistoryDetail(null)}
+                className="w-8 h-8 flex items-center justify-center rounded-full bg-neutral-200 text-neutral-600 hover:bg-danger hover:text-white transition-colors cursor-pointer"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="p-6 overflow-y-auto flex-grow bg-white">
+              <div className="flex flex-col gap-3">
+                {Array.from({ length: 15 }).map((_, idx) => {
+                  const choices = ['A', 'B', 'C', 'D', 'E', '-'];
+                  const picked = choices[(idx * 7 + 3) % choices.length];
+                  return (
+                    <div key={idx} className="flex justify-between items-center p-3 rounded-xl border-2 border-neutral-100 hover:border-primary/30 transition-colors">
+                      <span className="font-bold text-sm text-neutral-600">Soal {idx + 1}</span>
+                      <span className={`font-bold text-lg w-8 h-8 flex items-center justify-center rounded-lg ${picked === '-' ? 'bg-neutral-100 text-neutral-400' : 'bg-primary/10 text-primary'}`}>
+                        {picked}
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+            
+            <div className="p-4 border-t-2 border-neutral-100 bg-neutral-50 text-center">
+              <p className="text-xs font-bold text-neutral-400">Menampilkan rekaman jawaban terakhir peserta.</p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
