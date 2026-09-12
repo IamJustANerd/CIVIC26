@@ -1,73 +1,49 @@
-# React + TypeScript + Vite
+# CIVIC26 - Frontend (Client)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This is the frontend client for the **CIVIC26** Computer-Based Test (CBT) platform. It is built to be fast, responsive, and cheat-resistant, providing an excellent experience for both test participants and administrators.
 
-Currently, two official plugins are available:
+## Technologies Used
+- **Framework:** React 19 + TypeScript
+- **Build Tool:** Vite
+- **Styling:** Tailwind CSS v4
+- **Routing:** React Router v7
+- **HTTP Client:** Axios
+- **Excel Export:** SheetJS (xlsx)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Prerequisites
+- **Node.js** (v18 or higher recommended)
+- **npm** (comes with Node.js)
 
-## React Compiler
+## Setup Instructions
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+1. **Install Dependencies**
+   Navigate to the `client` directory and install the required packages:
+   ```bash
+   cd client
+   npm install
+   ```
 
-## Expanding the ESLint configuration
+2. **Environment Variables**
+   Create a `.env` file in the root of the `client` directory. You will need to define your API endpoint.
+   ```env
+   VITE_API_URL=http://localhost:3000
+   ```
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+3. **Run the Development Server**
+   Start the Vite development server:
+   ```bash
+   npm run dev
+   ```
+   The app will be available at `http://localhost:5173`.
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Build for Production
+To create a production-ready build, run:
+```bash
+npm run build
 ```
+This will compile TypeScript and bundle the application into the `dist` folder.
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## Key Features
+- **Admin Dashboard:** Manage quizzes, questions, accounts, and view detailed participant analytics (with Excel export).
+- **Participant Flow:** Secure login, pre-test tutorials, timed test sessions with anti-cheat measures (e.g., tracking tab-switching), and dynamic question/option shuffling.
+- **Cheatsheet Integration:** Built-in support for displaying reference materials directly within the test session.
