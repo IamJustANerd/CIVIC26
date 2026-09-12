@@ -1,45 +1,74 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Header } from '../components/Header'
-import { dummyTryOuts, dummyTests } from '../data/examData'
+import { quizApi } from '../api/quiz.api'
+import type { Quiz } from '../api/quiz.api'
 import type { TestType } from '../components/DashboardTable'
 
 export const PreTest = () => {
   const { type, id } = useParams<{ type: string; id: string }>()
   const navigate = useNavigate()
   const examType = type as TestType
-  const [timeLeft, setTimeLeft] = useState<string>('')
-
-  const allData = examType === 'tryout' ? dummyTryOuts : dummyTests
-  const item = allData.find(i => i.id === id)
+  const [quiz, setQuiz] = useState<Quiz | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [timerLabel, setTimerLabel] = useState('Sisa Waktu')
 
   useEffect(() => {
-    if (!item) return
-    const tick = () => {
-      const now = new Date()
-      // const end = new Date()
-      // Parse end time from item.end string (format: "DD Month YYYY\nHH:mm")
-      const parts = item.end.split('\n')
-      if (parts.length === 2) {
-        const [datePart, timePart] = parts
-        const endDate = new Date(`${datePart} ${timePart}`)
-        const diff = endDate.getTime() - now.getTime()
-        if (diff <= 0) {
-          setTimeLeft('Waktu Habis')
-          return
+    const fetchQuiz = async () => {
+      try {
+        if (!id) return
+        const res = await quizApi.getQuizById(id)
+        if (res.success) {
+          setQuiz(res.data)
         }
-        const h = Math.floor(diff / 3_600_000)
-        const m = Math.floor((diff % 3_600_000) / 60_000)
-        const s = Math.floor((diff % 60_000) / 1_000)
-        setTimeLeft(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`)
+      } catch (error) {
+        console.error('Failed to fetch quiz details', error)
+      } finally {
+        setIsLoading(false)
       }
+    }
+    fetchQuiz()
+  }, [id])
+
+  useEffect(() => {
+    if (!quiz) return
+    const tick = () => {
+      const now = new Date().getTime()
+      const openDate = new Date(quiz.openTime).getTime()
+      const closeDate = new Date(quiz.closeTime).getTime()
+
+      let diff = 0
+      if (now < openDate) {
+        setTimerLabel('Sisa Waktu Mulai Ujian')
+        diff = openDate - now
+      } else if (now < closeDate) {
+        setTimerLabel('Sisa Waktu Pengerjaan Ujian')
+        diff = closeDate - now
+      } else {
+        setTimerLabel('Waktu Habis')
+        setTimeLeft('00:00:00')
+        return
+      }
+
+      const h = Math.floor(diff / 3_600_000)
+      const m = Math.floor((diff % 3_600_000) / 60_000)
+      const s = Math.floor((diff % 60_000) / 1_000)
+      setTimeLeft(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`)
     }
     tick()
     const timer = setInterval(tick, 1000)
     return () => clearInterval(timer)
-  }, [item])
+  }, [quiz])
 
-  if (!item) {
+  if (isLoading) {
+    return (
+      <div className="h-screen flex items-center justify-center font-oxanium text-dark">
+        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    )
+  }
+
+  if (!quiz) {
     return (
       <div className="h-screen flex items-center justify-center font-oxanium text-dark">
         <p>Ujian tidak ditemukan.</p>
@@ -47,7 +76,17 @@ export const PreTest = () => {
     )
   }
 
-  const title = examType === 'tryout' ? 'Try Out' : 'Test'
+  const title = quiz.type === 'TRYOUT' ? 'Try Out' : 'Test'
+  
+  const formatIndonesianDate = (dateStr: string) => {
+    const date = new Date(dateStr)
+    const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu']
+    const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember']
+    
+    return `${days[date.getDay()]}, ${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}\n${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
+  }
+
+  const durationMinutes = Math.round((new Date(quiz.closeTime).getTime() - new Date(quiz.openTime).getTime()) / 60000)
 
   return (
     <div className="h-screen w-screen overflow-hidden bg-gradient-to-r from-white via-white via-[70%] to-danger/30 p-4 pt-20 md:p-6 md:pt-24 relative flex flex-col">
@@ -66,7 +105,7 @@ export const PreTest = () => {
             </svg>
             Kembali
           </button>
-          <h1 className="font-slant text-3xl md:text-4xl text-dark">{item.name}</h1>
+          <h1 className="font-slant text-3xl md:text-4xl text-dark">{quiz.name}</h1>
         </div>
 
         {/* Main two-column card area */}
@@ -83,15 +122,15 @@ export const PreTest = () => {
               </div>
               <div className="bg-primary/5 rounded-2xl p-4">
                 <p className="font-oxanium text-xs text-neutral-400 mb-1">Total Soal</p>
-                <p className="font-oxanium font-bold text-dark text-lg">{item.totalQuestions ?? '-'} soal</p>
+                <p className="font-oxanium font-bold text-dark text-lg">{quiz.totalQuestions ?? '-'} soal</p>
               </div>
               <div className="bg-primary/5 rounded-2xl p-4">
                 <p className="font-oxanium text-xs text-neutral-400 mb-1">Durasi</p>
-                <p className="font-oxanium font-bold text-dark text-lg">{item.duration ?? '-'} menit</p>
+                <p className="font-oxanium font-bold text-dark text-lg">{durationMinutes > 0 ? durationMinutes : '-'} menit</p>
               </div>
               <div className="bg-primary/5 rounded-2xl p-4">
                 <p className="font-oxanium text-xs text-neutral-400 mb-1">Waktu Mulai</p>
-                <p className="font-oxanium font-bold text-dark text-sm">{item.start.replace('\n', ' ')}</p>
+                <p className="font-oxanium font-bold text-dark text-sm">{formatIndonesianDate(quiz.openTime).replace('\n', ' ')}</p>
               </div>
             </div>
           </div>
@@ -99,7 +138,7 @@ export const PreTest = () => {
           {/* Right: Countdown & CTA */}
           <div className="bg-light border-2 border-primary rounded-3xl p-6 md:p-8 shadow-md flex flex-col items-center justify-center w-full lg:w-1/2 gap-6">
             <div className="text-center">
-              <p className="font-oxanium text-neutral-400 text-sm mb-2">Sisa Waktu Mulai Ujian</p>
+              <p className="font-oxanium text-neutral-400 text-sm mb-2">{timerLabel}</p>
               <p className="font-slant text-5xl md:text-6xl text-danger tracking-widest">
                 {timeLeft || '--:--:--'}
               </p>

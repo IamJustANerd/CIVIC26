@@ -1,19 +1,40 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { dummyTryOuts, dummyTests } from '../data/examData'
+import { quizApi } from '../api/quiz.api'
+import type { Quiz } from '../api/quiz.api'
 import type { TestType } from '../components/DashboardTable'
 
 export const PreTutorial = () => {
   const { type, id } = useParams<{ type: string; id: string }>()
   const navigate = useNavigate()
   const examType = type as TestType
-  
-  const allData = examType === 'tryout' ? dummyTryOuts : dummyTests
-  const examData = allData.find(i => i.id === id)
+  const [quiz, setQuiz] = useState<Quiz | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchQuiz = async () => {
+      try {
+        if (!id) return
+        const res = await quizApi.getQuizById(id)
+        if (res.success) {
+          setQuiz(res.data)
+        }
+      } catch (error) {
+        console.error('Failed to fetch quiz', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    fetchQuiz()
+  }, [id])
 
   const [isChecked, setIsChecked] = useState(false)
 
-  if (!examData) {
+  if (isLoading) {
+    return <div className="p-8 text-center font-oxanium">Loading...</div>
+  }
+
+  if (!quiz) {
     return <div className="p-8 text-center font-oxanium">Exam not found.</div>
   }
 

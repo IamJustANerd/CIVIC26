@@ -11,6 +11,7 @@ export interface TableItem {
   status: TestStatus;
   totalQuestions?: number;
   duration?: number; // minutes
+  type?: string;
 }
 
 interface StatusBadgeProps {
@@ -19,15 +20,19 @@ interface StatusBadgeProps {
   type: TestType;
 }
 
-const parseIndonesianDate = (dateStr: string) => {
+const formatIndonesianDate = (dateStr: string) => {
+  const date = new Date(dateStr)
+  const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu']
   const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember']
-  const cleanStr = dateStr.replace('\n', ' ')
-  const parts = cleanStr.split(' ')
-  if (parts.length < 4) return 0
-  const [day, monthStr, year, time] = parts
-  const monthIdx = months.indexOf(monthStr)
-  if (monthIdx === -1) return 0
-  return new Date(`${year}-${String(monthIdx + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}T${time}:00`).getTime()
+  
+  const dayName = days[date.getDay()]
+  const day = date.getDate()
+  const month = months[date.getMonth()]
+  const year = date.getFullYear()
+  const hours = String(date.getHours()).padStart(2, '0')
+  const minutes = String(date.getMinutes()).padStart(2, '0')
+  
+  return `${day} ${month} ${year}\n${hours}:${minutes}`
 }
 
 export const StatusBadge = ({ status, itemId, type }: StatusBadgeProps) => {
@@ -80,7 +85,7 @@ export const DashboardTable = ({ title, type, data, compact = false, hideSeeAll 
 
   // Sort by date newest to oldest
   const sortedData = [...data].sort((a, b) => {
-    return parseIndonesianDate(b.start) - parseIndonesianDate(a.start)
+    return new Date(b.start).getTime() - new Date(a.start).getTime()
   })
 
   return (
@@ -111,8 +116,8 @@ export const DashboardTable = ({ title, type, data, compact = false, hideSeeAll 
             {sortedData.map((item, i) => (
               <tr key={item.id} className={`border-t border-primary/20 ${i % 2 === 0 ? 'bg-primary/5' : 'bg-transparent'}`}>
                 <td className="py-3 px-2 md:px-3 truncate">{item.name}</td>
-                <td className="py-3 px-2 md:px-3 text-center whitespace-pre-line leading-tight">{item.start}</td>
-                {!compact && <td className="py-3 px-2 md:px-3 text-center whitespace-pre-line leading-tight">{item.end}</td>}
+                <td className="py-3 px-2 md:px-3 text-center whitespace-pre-line leading-tight">{formatIndonesianDate(item.start)}</td>
+                {!compact && <td className="py-3 px-2 md:px-3 text-center whitespace-pre-line leading-tight">{formatIndonesianDate(item.end)}</td>}
                 <td className="py-3 px-2 md:px-3 text-right">
                   <StatusBadge status={item.status} itemId={item.id} type={type} />
                 </td>
