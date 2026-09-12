@@ -1,17 +1,45 @@
 import { useNavigate, useLocation } from 'react-router-dom'
 import { AdminHeader } from '../components/AdminHeader'
+import { useState, useEffect } from 'react'
 import { AdminDashboardTable } from '../components/AdminDashboardTable'
-import { dummyTryOuts, dummyTests } from '../data/examData'
-import type { TestType } from '../components/DashboardTable'
+import { quizApi } from '../api/quiz.api'
+import type { TableItem, TestType } from '../components/DashboardTable'
 
 export const AdminSelection = () => {
   const navigate = useNavigate()
   const { pathname } = useLocation()
   const examType: TestType = pathname.includes('tryout') ? 'tryout' : 'test'
 
+  const [tableData, setTableData] = useState<TableItem[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+
   const isTryOut = examType === 'tryout'
-  const data = isTryOut ? dummyTryOuts : dummyTests
   const title = isTryOut ? 'Try Out' : 'Test'
+
+  useEffect(() => {
+    const fetchQuizzes = async () => {
+      try {
+        const queryType = isTryOut ? 'TRYOUT' : 'TEST'
+        const res = await quizApi.getQuizzes(queryType)
+        if (res.success) {
+          const items: TableItem[] = res.data.map((q) => ({
+            id: q.id,
+            name: q.name,
+            start: q.openTime,
+            end: q.closeTime,
+            status: 'Belum Dimulai', // Dummy status for admin table
+            type: q.type,
+          }))
+          setTableData(items)
+        }
+      } catch (error) {
+        console.error('Failed to fetch quizzes for admin selection', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    fetchQuizzes()
+  }, [isTryOut])
 
   return (
     <div className="h-screen w-screen overflow-hidden bg-gradient-to-r from-white via-white via-[70%] to-danger/30 p-4 pt-20 md:p-6 md:pt-24 relative flex flex-col">
@@ -35,7 +63,13 @@ export const AdminSelection = () => {
 
         {/* Full table */}
         <div className="flex-grow min-h-0">
-          <AdminDashboardTable title={title} type={examType} data={data} hideSeeAll={true} />
+          {isLoading ? (
+            <div className="h-full flex items-center justify-center bg-light border-2 border-primary rounded-3xl">
+              <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          ) : (
+            <AdminDashboardTable title={title} type={examType} data={tableData} hideSeeAll={true} />
+          )}
         </div>
 
       </div>

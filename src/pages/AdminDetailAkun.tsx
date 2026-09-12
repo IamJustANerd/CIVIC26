@@ -1,14 +1,71 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { AdminHeader } from '../components/AdminHeader'
-import { dummyAccounts } from '../data/examData'
+import { userApi, type User } from '../api/user.api'
+import { submissionApi, type Submission } from '../api/submission.api'
+import { quizApi, type Quiz } from '../api/quiz.api'
 
 export const AdminDetailAkun = () => {
   const navigate = useNavigate()
   const { id } = useParams<{ id: string }>()
   const [selectedHistoryDetail, setSelectedHistoryDetail] = useState<any | null>(null)
   
-  const account = dummyAccounts.find(acc => acc.id === id)
+  const [account, setAccount] = useState<User | null>(null)
+  const [submissions, setSubmissions] = useState<Submission[]>([])
+  const [quizzes, setQuizzes] = useState<Quiz[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!id) return
+      try {
+        const [userRes, subRes, quizRes] = await Promise.all([
+          userApi.getUsers(),
+          submissionApi.getSubmissionsByUserId(id),
+          quizApi.getQuizzes()
+        ])
+        if (userRes.success) {
+          const user = userRes.data.find(u => u.id === id) || null
+          setAccount(user)
+        }
+        if (subRes.success) setSubmissions(subRes.data)
+        if (quizRes.success) setQuizzes(quizRes.data)
+      } catch (error) {
+        console.error('Failed to fetch data', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    fetchData()
+  }, [id])
+
+  const handleDelete = async () => {
+    if (!id) return
+    const confirmed = window.confirm('Apakah Anda yakin ingin menghapus akun ini?')
+    if (confirmed) {
+      try {
+        const res = await userApi.deleteUser(id)
+        if (res.success) {
+          alert('Akun berhasil dihapus.')
+          navigate('/admin/list-akun')
+        }
+      } catch (error) {
+        alert('Gagal menghapus akun.')
+      }
+    }
+  }
+
+  // Helper to format dates for the table
+  const formatDateTime = (dateStr: string | null) => {
+    if (!dateStr) return '-'
+    const d = new Date(dateStr)
+    const yyyy = d.getFullYear()
+    const mm = String(d.getMonth() + 1).padStart(2, '0')
+    const dd = String(d.getDate()).padStart(2, '0')
+    const HH = String(d.getHours()).padStart(2, '0')
+    const MM = String(d.getMinutes()).padStart(2, '0')
+    return `${dd}/${mm}/${yyyy} ${HH}:${MM}`
+  }
 
   return (
     <div className="min-h-screen w-full overflow-x-hidden bg-gradient-to-r from-white via-white via-[70%] to-danger/30 p-4 pt-20 md:p-6 md:pt-24 relative flex flex-col font-oxanium pb-20">
@@ -52,39 +109,57 @@ export const AdminDetailAkun = () => {
                 </tr>
               </thead>
               <tbody>
-                {account && account.history.map((hist) => (
-                  <tr key={hist.id} className="border-b-2 border-neutral-100 hover:bg-neutral-50 transition-colors">
-                    <td className="py-4 px-4 font-bold text-dark">{hist.testName}</td>
-                    <td className="py-4 px-4 font-bold text-primary text-sm max-w-[150px]">{hist.startTime}</td>
-                    <td className="py-4 px-4 font-bold text-danger text-sm max-w-[150px]">{hist.endTime}</td>
-                    <td className="py-4 px-4 font-bold text-neutral-600">{hist.duration}</td>
-                    <td className="py-4 px-4">
-                      <span className={`font-bold px-3 py-1 rounded-full text-xs ${hist.leaveCount > 0 ? 'bg-danger/10 text-danger' : 'bg-primary/10 text-primary'}`}>
-                        {hist.leaveCount} kali
-                      </span>
-                    </td>
-                    <td className="py-4 px-4 text-center">
-                      {hist.finalScore !== null ? (
-                        <span className="font-bold text-lg text-dark">{hist.finalScore}</span>
-                      ) : (
-                        <span className="font-bold text-xs text-warning bg-warning/10 px-3 py-1 rounded-full">Proses</span>
-                      )}
-                    </td>
-                    <td className="py-4 px-4 text-center">
-                      <button 
-                        onClick={() => setSelectedHistoryDetail(hist)}
-                        className="text-xs font-bold bg-primary/10 text-primary hover:bg-primary hover:text-white px-3 py-1.5 rounded-lg transition-colors cursor-pointer whitespace-nowrap"
-                      >
-                        Detail
-                      </button>
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={7} className="py-8 text-center">
+                      <div className="flex justify-center">
+                        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                      </div>
                     </td>
                   </tr>
-                ))}
+                ) : submissions.map((sub) => {
+                  const quiz = quizzes.find(q => q.id === sub.quizId)
+                  const testName = quiz ? quiz.name : 'Unknown Quiz'
+                  const leaveCount = (sub as any).infractions?.length || 0
+
+                  return (
+                    <tr key={sub.id} className="border-b-2 border-neutral-100 hover:bg-neutral-50 transition-colors">
+                      <td className="py-4 px-4 font-bold text-dark">{testName}</td>
+                      <td className="py-4 px-4 font-bold text-primary text-sm max-w-[150px]">-</td>
+                      <td className="py-4 px-4 font-bold text-danger text-sm max-w-[150px]">{formatDateTime(sub.submissionTime)}</td>
+                      <td className="py-4 px-4 font-bold text-neutral-600">-</td>
+                      <td className="py-4 px-4">
+                        <span className={`font-bold px-3 py-1 rounded-full text-xs ${leaveCount > 0 ? 'bg-danger/10 text-danger' : 'bg-primary/10 text-primary'}`}>
+                          {leaveCount} kali
+                        </span>
+                      </td>
+                      <td className="py-4 px-4 text-center">
+                        {sub.isSubmitted && sub.score !== null ? (
+                          <span className="font-bold text-lg text-dark">{Math.round(sub.score)}</span>
+                        ) : (
+                          <span className="font-bold text-xs text-warning bg-warning/10 px-3 py-1 rounded-full">Proses</span>
+                        )}
+                      </td>
+                      <td className="py-4 px-4 text-center">
+                        <button 
+                          onClick={() => setSelectedHistoryDetail({ ...sub, testName, leaveCount })}
+                          className="bg-primary/10 text-primary hover:bg-primary hover:text-white p-2 rounded-xl transition-colors cursor-pointer inline-flex items-center justify-center group"
+                          title="Lihat Detail"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 group-hover:scale-110 transition-transform">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          </svg>
+                        </button>
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>
 
-          {account && account.history.length === 0 && (
+          {!isLoading && submissions.length === 0 && (
             <div className="w-full py-12 flex flex-col items-center justify-center text-center">
               <div className="w-20 h-20 bg-neutral-100 rounded-full flex items-center justify-center mb-4">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-10 h-10 text-neutral-400">
@@ -96,7 +171,7 @@ export const AdminDetailAkun = () => {
             </div>
           )}
 
-          {!account && (
+          {!account && !isLoading && (
             <div className="w-full py-12 text-center text-danger font-bold">
               Akun tidak ditemukan.
             </div>

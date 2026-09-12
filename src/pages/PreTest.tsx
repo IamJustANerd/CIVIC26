@@ -12,6 +12,8 @@ export const PreTest = () => {
   const [quiz, setQuiz] = useState<Quiz | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [timerLabel, setTimerLabel] = useState('Sisa Waktu')
+  const [timeLeft, setTimeLeft] = useState('')
+  const [isTestOpen, setIsTestOpen] = useState(false)
 
   useEffect(() => {
     const fetchQuiz = async () => {
@@ -38,17 +40,22 @@ export const PreTest = () => {
       const closeDate = new Date(quiz.closeTime).getTime()
 
       let diff = 0
+      let isOpen = false
       if (now < openDate) {
         setTimerLabel('Sisa Waktu Mulai Ujian')
         diff = openDate - now
       } else if (now < closeDate) {
         setTimerLabel('Sisa Waktu Pengerjaan Ujian')
         diff = closeDate - now
+        isOpen = true
       } else {
         setTimerLabel('Waktu Habis')
         setTimeLeft('00:00:00')
+        setIsTestOpen(false)
         return
       }
+
+      setIsTestOpen(isOpen)
 
       const h = Math.floor(diff / 3_600_000)
       const m = Math.floor((diff % 3_600_000) / 60_000)
@@ -153,7 +160,12 @@ export const PreTest = () => {
               </button>
               <button
                 onClick={() => navigate(`/test-session/${examType}/${id}`)}
-                className="w-full font-oxanium text-base font-bold text-light bg-danger py-3 rounded-xl border-2 border-danger hover:bg-danger/80 transition-all shadow-md cursor-pointer"
+                disabled={!isTestOpen}
+                className={`w-full font-oxanium text-base font-bold py-3 rounded-xl border-2 transition-all shadow-md cursor-pointer ${
+                  isTestOpen 
+                    ? 'text-light bg-danger border-danger hover:bg-danger/80' 
+                    : 'text-neutral-400 bg-neutral-200 border-neutral-300 cursor-not-allowed'
+                }`}
               >
                 Mulai Ujian
               </button>

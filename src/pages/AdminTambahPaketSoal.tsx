@@ -1,19 +1,24 @@
 import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AdminHeader } from '../components/AdminHeader'
+import { storageApi } from '../api/storage.api'
+import { quizApi } from '../api/quiz.api'
+import { questionApi } from '../api/question.api'
 
 interface Choice {
   id: string;
   text: string;
-  image?: string | null;
+  image: string | null;
+  fileUrl?: string;
   isCorrect: boolean;
 }
 
 interface Question {
   id: string;
   text: string;
-  images: string[];
-  scores: { benar: number; salah: number; kosong: number };
+  imageRef: string | null;
+  imageUrl: string | null;
+  scoreWeight: number;
   acakPilihan: boolean;
   choices: Choice[];
 }
@@ -24,8 +29,8 @@ export const AdminTambahPaketSoal = () => {
   const [paketName, setPaketName] = useState('')
   const [paketDescription, setPaketDescription] = useState('')
   
-  const [cheatsheetImage, setCheatsheetImage] = useState<string | null>(null)
-  const [acakSoal, setAcakSoal] = useState(false)
+  const [cheatsheetImage, setCheatsheetImage] = useState<{ url: string, id: string } | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   
   const cheatsheetInputRef = useRef<HTMLInputElement>(null)
 
@@ -33,8 +38,9 @@ export const AdminTambahPaketSoal = () => {
     {
       id: crypto.randomUUID(),
       text: '',
-      images: [],
-      scores: { benar: 10, salah: 0, kosong: 0 },
+      imageRef: null,
+      imageUrl: null,
+      scoreWeight: 10,
       acakPilihan: false,
       choices: [
         { id: crypto.randomUUID(), text: '', image: null, isCorrect: false },
@@ -49,8 +55,9 @@ export const AdminTambahPaketSoal = () => {
       {
         id: crypto.randomUUID(),
         text: '',
-        images: [],
-        scores: { benar: 10, salah: 0, kosong: 0 },
+        imageRef: null,
+        imageUrl: null,
+        scoreWeight: 10,
         acakPilihan: false,
         choices: [
           { id: crypto.randomUUID(), text: '', image: null, isCorrect: false },
@@ -68,54 +75,71 @@ export const AdminTambahPaketSoal = () => {
     setQuestions(questions.map(q => q.id === qId ? { ...q, text } : q))
   }
   
-  const handleQuestionScoreChange = (qId: string, field: 'benar' | 'salah' | 'kosong', value: number) => {
+  const handleQuestionScoreChange = (qId: string, value: number) => {
     setQuestions(questions.map(q => {
       if (q.id === qId) {
-        return { ...q, scores: { ...q.scores, [field]: value } }
+        return { ...q, scoreWeight: value }
       }
       return q
     }))
   }
   
-  const handleQuestionImageUpload = (qId: string, e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleQuestionImageUpload = async (qId: string, e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      const newFiles = Array.from(e.target.files)
-      setQuestions(questions.map(q => {
-        if (q.id === qId) {
-          const availableSlots = 3 - q.images.length;
-          const filesToAdd = newFiles.slice(0, availableSlots);
-          const newImageUrls = filesToAdd.map(f => URL.createObjectURL(f));
-          return { ...q, images: [...q.images, ...newImageUrls] }
+      const file = e.target.files[0]
+      const ext = file.name.split('.').pop()
+      const imageRefId = crypto.randomUUID()
+      try {
+        const key = `questions/${imageRefId}.${ext}`
+        const res = await storageApi.uploadFile(key, file)
+        if (res.success) {
+          const imageUrl = URL.createObjectURL(file)
+          setQuestions(questions.map(q => {
+            if (q.id === qId) {
+              return { ...q, imageUrl, imageRef: imageRefId }
+            }
+            return q
+          }))
         }
-        return q
-      }))
+      } catch (err) {
+        console.error('Failed to upload question image', err)
+      }
     }
     e.target.value = ''
   }
 
-  const handleRemoveQuestionImage = (qId: string, imgIndex: number) => {
+  const handleRemoveQuestionImage = (qId: string) => {
     setQuestions(questions.map(q => {
       if (q.id === qId) {
-        const newImages = [...q.images]
-        newImages.splice(imgIndex, 1)
-        return { ...q, images: newImages }
+        return { ...q, imageUrl: null, imageRef: null }
       }
       return q
     }))
   }
 
-  const handleChoiceImageUpload = (qId: string, cId: string, e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChoiceImageUpload = async (qId: string, cId: string, e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      const fileUrl = URL.createObjectURL(e.target.files[0])
-      setQuestions(questions.map(q => {
-        if (q.id === qId) {
-          return {
-            ...q,
-            choices: q.choices.map(c => c.id === cId ? { ...c, image: fileUrl } : c)
-          }
+      const file = e.target.files[0]
+      const ext = file.name.split('.').pop()
+      const imageRefId = crypto.randomUUID()
+      try {
+        const key = `choices/${imageRefId}.${ext}`
+        const res = await storageApi.uploadFile(key, file)
+        if (res.success) {
+          const fileUrl = URL.createObjectURL(file)
+          setQuestions(questions.map(q => {
+            if (q.id === qId) {
+              return {
+                ...q,
+                choices: q.choices.map(c => c.id === cId ? { ...c, image: imageRefId, fileUrl } : c)
+              }
+            }
+            return q
+          }))
         }
-        return q
-      }))
+      } catch (err) {
+        console.error('Failed to upload choice image', err)
+      }
     }
     e.target.value = ''
   }
@@ -187,9 +211,21 @@ export const AdminTambahPaketSoal = () => {
     }))
   }
   
-  const handleCheatsheetUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCheatsheetUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setCheatsheetImage(URL.createObjectURL(e.target.files[0]))
+      const file = e.target.files[0]
+      const ext = file.name.split('.').pop()
+      const imageRefId = crypto.randomUUID()
+      try {
+        const key = `cheatsheets/${imageRefId}.${ext}`
+        const res = await storageApi.uploadFile(key, file)
+        if (res.success) {
+          const url = URL.createObjectURL(file)
+          setCheatsheetImage({ url, id: imageRefId })
+        }
+      } catch (err) {
+        console.error('Failed to upload cheatsheet', err)
+      }
     }
   }
   
@@ -200,12 +236,65 @@ export const AdminTambahPaketSoal = () => {
     }
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    console.log({ paketName, paketDescription, cheatsheetImage, acakSoal, questions })
+    
+    // Validate that every question has a correct choice selected
+    for (let i = 0; i < questions.length; i++) {
+      if (!questions[i].choices.some(c => c.isCorrect)) {
+        alert(`Soal No. ${i + 1} belum memiliki jawaban benar! Silakan pilih salah satu opsi sebagai jawaban benar.`)
+        return
+      }
+    }
+
+    setIsSubmitting(true)
+    try {
+      // 1. Create the Quiz (PAKET)
+      const quizRes = await quizApi.createQuiz({
+        name: paketName,
+        description: paketDescription,
+        type: 'PAKET',
+        totalQuestions: questions.length,
+        cheatsheetRef: cheatsheetImage ? cheatsheetImage.id : null,
+      })
+
+      if (!quizRes.success) throw new Error('Gagal membuat paket soal')
+      const quizId = quizRes.data.id
+
+      // 2. Map and create all questions
+      for (const q of questions) {
+        const correctIndex = q.choices.findIndex(c => c.isCorrect)
+        const answerChar = ['a', 'b', 'c', 'd', 'e'][correctIndex]
+
+        const options = {
+          a: { text: q.choices[0]?.text || '', image: q.choices[0]?.image || null },
+          b: { text: q.choices[1]?.text || '', image: q.choices[1]?.image || null },
+          c: { text: q.choices[2]?.text || '', image: q.choices[2]?.image || null },
+          d: { text: q.choices[3]?.text || '', image: q.choices[3]?.image || null },
+          e: { text: q.choices[4]?.text || '', image: q.choices[4]?.image || null }
+        }
+
+        await questionApi.createQuestion({
+          quizId,
+          question: q.text,
+          imageRef: q.imageRef,
+          options: options,
+          answer: answerChar,
+          scoreWeight: q.scoreWeight || 10,
+          shuffleChoices: q.acakPilihan
+        })
+      }
+
+      navigate('/admin/master')
+    } catch (error) {
+      console.error('Failed to create question bank', error)
+      alert('Gagal menyimpan paket soal.')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
-  const totalScore = questions.reduce((acc, q) => acc + (q.scores.benar || 0), 0)
+  const totalScore = questions.reduce((acc, q) => acc + (q.scoreWeight || 0), 0)
 
   return (
     <div className="min-h-screen w-full overflow-x-hidden bg-gradient-to-r from-white via-white via-[70%] to-danger/30 p-4 pt-20 md:p-6 md:pt-24 relative flex flex-col font-oxanium pb-20">
@@ -269,7 +358,7 @@ export const AdminTambahPaketSoal = () => {
             
             {cheatsheetImage ? (
               <div className="relative inline-block border-2 border-neutral-200 rounded-xl overflow-hidden shadow-sm group">
-                <img src={cheatsheetImage} alt="Cheatsheet" className="max-h-64 object-contain" />
+                <img src={cheatsheetImage.url} alt="Cheatsheet" className="max-h-64 object-contain" />
                 <div className="absolute inset-0 bg-dark/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
                   <button
                     type="button"
@@ -301,24 +390,6 @@ export const AdminTambahPaketSoal = () => {
             )}
           </div>
           
-          {/* Acak Soal Toggle */}
-          <div className="bg-white rounded-3xl shadow-md p-6 border-2 border-primary/20 flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-bold text-dark">Acak Urutan Soal</h3>
-              <p className="text-sm text-neutral-500">Jika diaktifkan, urutan soal akan diacak untuk setiap peserta.</p>
-            </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input 
-                type="checkbox" 
-                value="" 
-                className="sr-only peer"
-                checked={acakSoal}
-                onChange={() => setAcakSoal(!acakSoal)}
-              />
-              <div className="w-14 h-7 bg-neutral-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-primary"></div>
-            </label>
-          </div>
-
           {/* Questions Section */}
           <div className="space-y-6">
             {questions.map((q, qIndex) => (
@@ -330,30 +401,12 @@ export const AdminTambahPaketSoal = () => {
                     
                     <div className="flex items-center gap-3 bg-neutral-50 px-3 py-1.5 rounded-lg border-2 border-neutral-200 flex-wrap">
                       <div className="flex items-center gap-2">
-                        <label className="text-xs font-bold text-primary">Benar</label>
+                        <label className="text-xs font-bold text-primary">Bobot Nilai</label>
                         <input 
                           type="number"
-                          value={q.scores.benar}
-                          onChange={(e) => handleQuestionScoreChange(q.id, 'benar', Number(e.target.value))}
-                          className="w-12 bg-white text-dark font-bold focus:outline-none text-center border rounded-md"
-                        />
-                      </div>
-                      <div className="flex items-center gap-2 border-l border-neutral-300 pl-3">
-                        <label className="text-xs font-bold text-danger">Salah</label>
-                        <input 
-                          type="number"
-                          value={q.scores.salah}
-                          onChange={(e) => handleQuestionScoreChange(q.id, 'salah', Number(e.target.value))}
-                          className="w-12 bg-white text-dark font-bold focus:outline-none text-center border rounded-md"
-                        />
-                      </div>
-                      <div className="flex items-center gap-2 border-l border-neutral-300 pl-3">
-                        <label className="text-xs font-bold text-neutral-500">Kosong</label>
-                        <input 
-                          type="number"
-                          value={q.scores.kosong}
-                          onChange={(e) => handleQuestionScoreChange(q.id, 'kosong', Number(e.target.value))}
-                          className="w-12 bg-white text-dark font-bold focus:outline-none text-center border rounded-md"
+                          value={q.scoreWeight}
+                          onChange={(e) => handleQuestionScoreChange(q.id, Number(e.target.value))}
+                          className="w-16 bg-white text-dark font-bold focus:outline-none text-center border rounded-md"
                         />
                       </div>
                     </div>
@@ -402,13 +455,13 @@ export const AdminTambahPaketSoal = () => {
                   </div>
 
                   <div className="flex flex-wrap gap-4">
-                    {q.images.map((imgUrl, imgIndex) => (
-                      <div key={imgIndex} className="relative inline-block border-2 border-neutral-200 rounded-xl overflow-hidden shadow-sm group bg-neutral-50 w-fit">
-                        <img src={imgUrl} alt={`Soal ${qIndex + 1} Gambar ${imgIndex + 1}`} className="h-32 object-contain" />
+                    {q.imageUrl && (
+                      <div className="relative inline-block border-2 border-neutral-200 rounded-xl overflow-hidden shadow-sm group bg-neutral-50 w-fit">
+                        <img src={q.imageUrl} alt={`Soal ${qIndex + 1} Gambar`} className="h-32 object-contain" />
                         <div className="absolute inset-0 bg-dark/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
                           <button
                             type="button"
-                            onClick={() => handleRemoveQuestionImage(q.id, imgIndex)}
+                            onClick={() => handleRemoveQuestionImage(q.id)}
                             className="bg-danger text-white p-2 rounded-full hover:bg-danger/80 transition-colors shadow-lg cursor-pointer"
                             title="Hapus Gambar"
                           >
@@ -418,19 +471,17 @@ export const AdminTambahPaketSoal = () => {
                           </button>
                         </div>
                       </div>
-                    ))}
+                    )}
                     
-                    {q.images.length < 3 && (
+                    {!q.imageUrl && (
                       <label className="inline-flex flex-col items-center justify-center h-32 px-6 border-2 border-dashed border-primary/50 rounded-xl text-sm font-bold text-primary hover:bg-primary/5 transition-colors cursor-pointer w-fit bg-white">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6 mb-1">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
                         </svg>
                         Tambah Gambar
-                        <span className="text-xs text-primary/70 font-normal mt-1">Maks {3 - q.images.length} lagi</span>
                         <input 
                           type="file" 
                           accept="image/*" 
-                          multiple
                           className="hidden" 
                           onChange={(e) => handleQuestionImageUpload(q.id, e)}
                         />
@@ -471,9 +522,17 @@ export const AdminTambahPaketSoal = () => {
                           required
                         />
                         
-                        {c.image ? (
+                        {c.fileUrl || c.image ? (
                           <div className="relative inline-block border-2 border-neutral-200 rounded-lg overflow-hidden shadow-sm group bg-white w-fit">
-                            <img src={c.image} alt={`Pilihan ${String.fromCharCode(65 + cIndex)}`} className="h-20 object-contain" />
+                            {c.fileUrl ? (
+                              <img src={c.fileUrl} alt={`Pilihan ${String.fromCharCode(65 + cIndex)}`} className="h-20 object-contain" />
+                            ) : c.image?.startsWith('blob:') ? (
+                              <img src={c.image} alt={`Pilihan ${String.fromCharCode(65 + cIndex)}`} className="h-20 object-contain" />
+                            ) : (
+                              <div className="h-16 w-16 flex items-center justify-center bg-neutral-100 text-[10px] text-center text-neutral-500 font-bold rounded-lg border border-neutral-200">
+                                [Gambar]
+                              </div>
+                            )}
                             <div className="absolute inset-0 bg-dark/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
                               <button
                                 type="button"
@@ -554,12 +613,27 @@ export const AdminTambahPaketSoal = () => {
           </button>
 
           {/* Submit Button */}
-          <div className="sticky bottom-6 pt-4">
+          <div className="sticky bottom-6 z-10 pt-4 flex gap-4 bg-gradient-to-t from-white via-white to-transparent pb-2">
+            <button 
+              type="button"
+              onClick={() => navigate('/admin/master')}
+              className="px-6 py-4 font-bold text-neutral-500 bg-white border-2 border-neutral-200 rounded-xl hover:bg-neutral-50 transition-colors shadow-lg cursor-pointer"
+            >
+              BATAL
+            </button>
             <button 
               type="submit"
-              className="w-full font-bold text-light bg-primary py-4 rounded-xl border-2 border-primary hover:bg-primary/90 transition-all shadow-xl cursor-pointer text-lg tracking-wide"
+              disabled={isSubmitting}
+              className="flex-grow font-bold text-light bg-primary py-4 rounded-xl shadow-xl hover:bg-primary/90 transition-colors text-lg cursor-pointer flex items-center justify-center gap-2"
             >
-              SIMPAN PAKET SOAL
+              {isSubmitting ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  MENYIMPAN...
+                </>
+              ) : (
+                'SIMPAN PAKET SOAL'
+              )}
             </button>
           </div>
 

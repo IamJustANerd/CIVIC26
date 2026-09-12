@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { quizApi } from '../api/quiz.api'
 import type { Quiz } from '../api/quiz.api'

@@ -7,7 +7,7 @@ import { PreTest } from './pages/PreTest'
 import { PreTutorial } from './pages/PreTutorial'
 import { Tutorial } from './pages/Tutorial'
 import { TestSession } from './pages/TestSession'
-import { ThankYou } from './pages/ThankYou'
+import { TestResult } from './pages/TestResult'
 import { AdminDashboard } from './pages/AdminDashboard'
 import { AdminMaster } from './pages/AdminMaster'
 import { AdminSelection } from './pages/AdminSelection'
@@ -15,6 +15,8 @@ import { AdminTambahPaketSoal } from './pages/AdminTambahPaketSoal'
 import { AdminEditPaketSoal } from './pages/AdminEditPaketSoal'
 import { AdminTambahTest } from './pages/AdminTambahTest'
 import { AdminEditTest } from './pages/AdminEditTest'
+import { AdminEditPaketSoalDetail } from './pages/AdminEditPaketSoalDetail'
+import { AdminEditTestDetail } from './pages/AdminEditTestDetail'
 import { AdminDetailTest } from './pages/AdminDetailTest'
 import { AdminDetailTestParticipant } from './pages/AdminDetailTestParticipant'
 import { AdminBuatAkun } from './pages/AdminBuatAkun'
@@ -36,15 +38,17 @@ export function Root() {
         <Route path="/tutorial/:type/:id" element={<RouteGuard><Tutorial /></RouteGuard>} />
         <Route path="/pre-test/:type/:id" element={<RouteGuard><PreTest /></RouteGuard>} />
         <Route path="/test-session/:type/:id" element={<RouteGuard><TestSession /></RouteGuard>} />
-        <Route path="/thank-you/:type/:id" element={<RouteGuard><ThankYou /></RouteGuard>} />
+        <Route path="/thank-you/:type/:id" element={<RouteGuard><TestResult /></RouteGuard>} />
         
         {/* Protected Admin Routes */}
         <Route path="/admin-dashboard" element={<RouteGuard requireAdmin><AdminDashboard /></RouteGuard>} />
         <Route path="/admin/master" element={<RouteGuard requireAdmin><AdminMaster /></RouteGuard>} />
         <Route path="/admin/tambah-paket-soal" element={<RouteGuard requireAdmin><AdminTambahPaketSoal /></RouteGuard>} />
         <Route path="/admin/edit-paket-soal" element={<RouteGuard requireAdmin><AdminEditPaketSoal /></RouteGuard>} />
+        <Route path="/admin/edit-paket-soal/:id" element={<RouteGuard requireAdmin><AdminEditPaketSoalDetail /></RouteGuard>} />
         <Route path="/admin/tambah-test" element={<RouteGuard requireAdmin><AdminTambahTest /></RouteGuard>} />
         <Route path="/admin/edit-test" element={<RouteGuard requireAdmin><AdminEditTest /></RouteGuard>} />
+        <Route path="/admin/edit-test/:id" element={<RouteGuard requireAdmin><AdminEditTestDetail /></RouteGuard>} />
         <Route path="/admin/detail-test" element={<RouteGuard requireAdmin><AdminDetailTest /></RouteGuard>} />
         <Route path="/admin/detail-test/:id" element={<RouteGuard requireAdmin><AdminDetailTestParticipant /></RouteGuard>} />
         <Route path="/admin/buat-akun" element={<RouteGuard requireAdmin><AdminBuatAkun /></RouteGuard>} />

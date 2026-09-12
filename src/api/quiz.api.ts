@@ -9,6 +9,7 @@ export interface Quiz {
   closeTime: string;
   totalQuestions: number;
   cheatsheetRef: string | null;
+  shuffleQuestions: boolean;
 }
 
 export interface QuizzesResponse {
@@ -30,6 +31,21 @@ export const quizApi = {
 
   getQuizById: async (id: string): Promise<QuizResponse> => {
     const response = await api.get<QuizResponse>(`/quizzes/${id}`);
+    return response.data;
+  },
+
+  createQuiz: async (payload: Partial<Quiz> & { sourcePaketId?: string }): Promise<QuizResponse> => {
+    const response = await api.post<QuizResponse>('/quizzes', payload);
+    return response.data;
+  },
+
+  updateQuiz: async (id: string, payload: Partial<Quiz>): Promise<QuizResponse> => {
+    const response = await api.put<QuizResponse>(`/quizzes/${id}`, payload);
+    return response.data;
+  },
+
+  deleteQuiz: async (id: string): Promise<{ success: boolean; message: string }> => {
+    const response = await api.delete<{ success: boolean; message: string }>(`/quizzes/${id}`);
     return response.data;
   },
 };

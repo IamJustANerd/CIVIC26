@@ -1,9 +1,42 @@
 import { useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
 import { AdminHeader } from '../components/AdminHeader'
-import { dummyTests } from '../data/examData'
+import { quizApi } from '../api/quiz.api'
+import type { Quiz } from '../api/quiz.api'
 
 export const AdminDetailTest = () => {
   const navigate = useNavigate()
+
+  const [tests, setTests] = useState<Quiz[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchQuizzes = async () => {
+      try {
+        const res = await quizApi.getQuizzes()
+        if (res.success) {
+          setTests(res.data.filter(q => q.type !== 'PAKET'))
+        }
+      } catch (error) {
+        console.error('Failed to fetch tests', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    fetchQuizzes()
+  }, [])
+
+  const formatIndonesianDate = (dateStr: string) => {
+    const date = new Date(dateStr)
+    const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu']
+    const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember']
+    const day = date.getDate()
+    const month = months[date.getMonth()]
+    const year = date.getFullYear()
+    const hours = String(date.getHours()).padStart(2, '0')
+    const minutes = String(date.getMinutes()).padStart(2, '0')
+    return `${day} ${month} ${year} - ${hours}:${minutes}`
+  }
 
   return (
     <div className="min-h-screen w-full overflow-x-hidden bg-gradient-to-r from-white via-white via-[70%] to-danger/30 p-4 pt-20 md:p-6 md:pt-24 relative flex flex-col font-oxanium pb-20">
@@ -24,7 +57,11 @@ export const AdminDetailTest = () => {
 
         <div className="bg-white w-full rounded-3xl shadow-xl p-6 md:p-10 border-2 border-primary/20 animate-in fade-in zoom-in duration-500">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {dummyTests.map((test) => (
+            {isLoading ? (
+              <div className="col-span-full py-12 flex justify-center">
+                <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+              </div>
+            ) : tests.map((test) => (
               <div key={test.id} className="bg-neutral-50 rounded-2xl p-6 border-2 border-neutral-200 hover:border-primary/50 hover:bg-primary/5 transition-all flex flex-col h-full group">
                 <div className="w-12 h-12 bg-primary/10 text-primary rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
@@ -39,19 +76,19 @@ export const AdminDetailTest = () => {
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-3.5 h-3.5">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    Mulai: {test.start.replace('\n', ' - ')}
+                    Mulai: {formatIndonesianDate(test.openTime)}
                   </div>
                   <div className="flex items-center gap-1">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-3.5 h-3.5 text-danger">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    <span className="text-danger">Selesai: {test.end.replace('\n', ' - ')}</span>
+                    <span className="text-danger">Selesai: {formatIndonesianDate(test.closeTime)}</span>
                   </div>
                 </div>
                 
                 <div className="flex items-center justify-between mt-auto pt-4 border-t-2 border-neutral-200">
-                  <span className={`text-xs font-bold py-1 px-3 rounded-full ${test.status === 'Belum Dimulai' ? 'bg-neutral-200 text-neutral-500' : 'bg-primary/10 text-primary'}`}>
-                    {test.status}
+                  <span className={`text-xs font-bold py-1 px-3 rounded-full bg-neutral-200 text-neutral-500`}>
+                    {test.type}
                   </span>
                   
                   <button 
@@ -68,7 +105,7 @@ export const AdminDetailTest = () => {
             ))}
           </div>
 
-          {dummyTests.length === 0 && (
+          {!isLoading && tests.length === 0 && (
             <div className="w-full py-12 flex flex-col items-center justify-center text-center">
               <div className="w-20 h-20 bg-neutral-100 rounded-full flex items-center justify-center mb-4">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-10 h-10 text-neutral-400">

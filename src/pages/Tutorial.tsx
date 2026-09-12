@@ -13,7 +13,7 @@ const tutorialQuestions = [
   },
   {
     id: 2,
-    text: "Terkadang, sebuah soal memiliki petunjuk visual atau gambar. Coba lihat tombol 'Hint' berwarna kuning di bagian bawah. Tombol itu sekarang aktif! Klik tombol 'Hint' untuk memunculkan gambar di sisi kiri.",
+    text: "Sebuah Test atau Try Out bisa saja memiliki petunjuk yang dapat kamu pakai. Coba lihat tombol 'Hint' berwarna oranye di bagian bawah. Klik tombol 'Hint' untuk memunculkan gambar di sisi kiri.",
     options: ['Wah, keren!', 'Gambarnya muncul!', 'Sangat interaktif', 'Paham', 'Luar Biasa'],
     hasHint: true,
     hintImage: 'Gambar Ilustrasi/Grafik'
@@ -35,13 +35,13 @@ const tutorialQuestions = [
 export const Tutorial = () => {
   const { type, id } = useParams<{ type: string; id: string }>()
   const navigate = useNavigate()
-  
+
   const [currentIdx, setCurrentIdx] = useState(0)
   const [answers, setAnswers] = useState<Record<number, number>>({})
   const [showHint, setShowHint] = useState(false)
-  
+
   const [quiz, setQuiz] = useState<Quiz | null>(null)
-  const [cheatsheetUrl, setCheatsheetUrl] = useState<string | null>(null)
+  const [cheatsheetUrl, setCheatsheetUrl] = useState<string | null>('https://placehold.co/400x300?text=Contoh+Cheatsheet+Tutorial')
 
   useEffect(() => {
     const fetchQuizAndCheatsheet = async () => {
@@ -51,9 +51,12 @@ export const Tutorial = () => {
         if (quizRes.success && quizRes.data) {
           setQuiz(quizRes.data)
           if (quizRes.data.cheatsheetRef) {
-            const presignRes = await storageApi.getPresignedUrl(quizRes.data.cheatsheetRef)
-            if (presignRes.success) {
-              setCheatsheetUrl(presignRes.data.url)
+            const listRes = await storageApi.listObjects(`cheatsheets/${quizRes.data.cheatsheetRef}`)
+            if (listRes.success && listRes.data.length > 0) {
+              const presignRes = await storageApi.getPresignedUrl(listRes.data[0].key)
+              if (presignRes.success) {
+                setCheatsheetUrl(presignRes.data.url)
+              }
             }
           }
         }
@@ -81,7 +84,7 @@ export const Tutorial = () => {
 
   return (
     <div className="h-screen w-screen overflow-hidden bg-white flex flex-col font-oxanium text-dark">
-      
+
       {/* Header Bar */}
       <div className="h-16 shrink-0 border-b border-primary/20 flex items-center justify-between px-6 bg-light shadow-sm z-10">
         <h1 className="font-slant text-2xl text-primary">TUTORIAL UJIAN</h1>
@@ -93,36 +96,36 @@ export const Tutorial = () => {
 
       {/* Main Test Layout */}
       <div className="flex-grow flex min-h-0 relative overflow-hidden">
-        
+
         {/* Animated Hint Panel (Left) */}
-        <div 
-          className={`transition-all duration-500 ease-out border-primary/20 bg-neutral-50 flex flex-col shrink-0 overflow-hidden ${
-            showHint ? 'w-full md:w-[400px] border-r opacity-100' : 'w-0 border-r-0 opacity-0'
-          }`}
-        >
-          <div className="p-6 w-full h-full flex flex-col min-w-[300px]">
-            <div className="flex justify-between items-center mb-4 shrink-0">
-              <h3 className="font-bold text-dark text-lg">Petunjuk Gambar</h3>
-              <button onClick={() => setShowHint(false)} className="text-neutral-400 hover:text-danger transition-colors cursor-pointer">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-6 h-6">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+        <div className={`transition-all duration-500 ease-in-out shrink-0 ${showHint ? 'w-full md:w-1/4 opacity-100 border-r border-primary/20' : 'w-0 opacity-0 overflow-hidden'} bg-neutral-50 flex flex-col h-full`}>
+          <div className="p-4 md:p-6 min-w-[320px] flex flex-col h-full">
+            <div className="flex justify-between items-center mb-6 shrink-0">
+              <h3 className="font-bold text-lg text-primary flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 0 0 1.5-.189m-1.5.189a6.01 6.01 0 0 1-1.5-.189m3.75 7.478a12.06 12.06 0 0 1-4.5 0m3.75 2.383a14.406 14.406 0 0 1-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 1 0-7.516 0c.85.493 1.509 1.333 1.509 2.316V18" />
+                </svg>
+                Cheatsheet
+              </h3>
+              <button
+                onClick={() => setShowHint(false)}
+                className="p-2 hover:bg-neutral-200 rounded-lg transition-colors text-neutral-500 hover:text-dark"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
-            
-            <div className="flex-grow rounded-2xl overflow-hidden border-2 border-neutral-200 bg-white shadow-inner flex items-center justify-center p-4 relative">
+
+            <div className="flex-grow rounded-2xl overflow-hidden border-2 border-neutral-200 bg-white shadow-inner flex items-center justify-center p-2 relative">
               {cheatsheetUrl ? (
-                <img 
-                  src={cheatsheetUrl} 
-                  alt="Cheatsheet" 
-                  className="w-full h-full object-contain rounded-xl"
-                />
+                <img src={cheatsheetUrl} alt="Cheatsheet" className="max-w-full max-h-[80vh] object-contain rounded-xl" />
               ) : (
-                <div className="w-full h-full bg-neutral-100 rounded-xl flex flex-col items-center justify-center text-neutral-400 border-2 border-dashed border-neutral-300">
+                <div className="w-full h-full bg-neutral-100 rounded-xl flex flex-col items-center justify-center text-neutral-400 border-2 border-dashed border-neutral-300 p-4 text-center">
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-12 h-12 mb-2">
                     <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
                   </svg>
-                  <span className="font-bold text-sm text-center px-4">{q.hintImage}</span>
+                  <span className="font-bold text-sm">Cheatsheet</span>
                 </div>
               )}
             </div>
@@ -132,7 +135,7 @@ export const Tutorial = () => {
         {/* Center: Question Area */}
         <div className="flex-1 flex flex-col min-w-0 bg-primary/5 transition-all duration-500">
           <div className="flex-grow p-6 md:p-12 overflow-y-auto">
-            
+
             {/* Tutorial Banner */}
             <div className="mb-6 bg-warning/20 border-2 border-warning text-warning-800 p-4 rounded-xl flex items-start gap-3">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6 shrink-0 mt-0.5 text-warning">
@@ -162,17 +165,15 @@ export const Tutorial = () => {
                   <button
                     key={i}
                     onClick={() => handleSelect(i)}
-                    className={`flex items-center gap-4 p-4 rounded-xl border-2 transition-all cursor-pointer text-left ${
-                      isSelected 
-                        ? 'border-primary bg-primary/10 shadow-sm' 
-                        : 'border-neutral-200 bg-white hover:border-primary/50 hover:bg-primary/5'
-                    }`}
+                    className={`flex items-center gap-4 p-4 rounded-xl border-2 transition-all cursor-pointer text-left ${isSelected
+                      ? 'border-primary bg-primary/10 shadow-sm'
+                      : 'border-neutral-200 bg-white hover:border-primary/50 hover:bg-primary/5'
+                      }`}
                   >
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 border-2 font-bold ${
-                      isSelected 
-                        ? 'bg-primary border-primary text-white' 
-                        : 'border-neutral-300 text-neutral-500'
-                    }`}>
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 border-2 font-bold ${isSelected
+                      ? 'bg-primary border-primary text-white'
+                      : 'border-neutral-300 text-neutral-500'
+                      }`}>
                       {letter}
                     </div>
                     <span className="text-base">{opt}</span>
@@ -191,18 +192,17 @@ export const Tutorial = () => {
             >
               Kembali
             </button>
-            
+
             {/* HINT BUTTON */}
             <button
               onClick={() => setShowHint(!showHint)}
-              disabled={!q.hasHint}
-              className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold border-2 transition-all ${
-                q.hasHint
-                  ? showHint 
-                    ? 'bg-warning/20 border-warning text-warning-800 hover:bg-warning/30 cursor-pointer'
-                    : 'bg-warning text-warning-900 border-warning hover:bg-warning/90 cursor-pointer shadow-sm'
-                  : 'bg-neutral-100 border-neutral-200 text-neutral-400 cursor-not-allowed opacity-60'
-              }`}
+              disabled={!cheatsheetUrl}
+              className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold border-2 transition-all ${cheatsheetUrl
+                ? showHint
+                  ? 'bg-warning/20 border-warning text-warning-800 hover:bg-warning/30 cursor-pointer'
+                  : 'bg-warning text-warning-900 border-warning hover:bg-warning/90 cursor-pointer shadow-sm'
+                : 'bg-neutral-100 border-neutral-200 text-neutral-400 cursor-not-allowed opacity-60'
+                }`}
             >
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 0 0 1.5-.189m-1.5.189a6.01 6.01 0 0 1-1.5-.189m3.75 7.478a12.06 12.06 0 0 1-4.5 0m3.75 2.383a14.406 14.406 0 0 1-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 1 0-7.516 0c.85.493 1.509 1.333 1.509 2.316V18" />
@@ -222,7 +222,7 @@ export const Tutorial = () => {
 
         {/* Right Side: Navigation Grid (25%) */}
         <div className="w-80 shrink-0 border-l border-primary/20 bg-light flex flex-col hidden lg:flex transition-all duration-500">
-          
+
           <div className="p-6 shrink-0 border-b border-primary/10">
             <h3 className="font-bold text-lg mb-2">Navigasi Soal</h3>
             <div className="flex gap-4 text-xs text-neutral-500">
@@ -245,7 +245,7 @@ export const Tutorial = () => {
                 if (isAnswered) {
                   style = "bg-primary border-primary text-white"
                 }
-                
+
                 return (
                   <button
                     key={i}
@@ -266,14 +266,13 @@ export const Tutorial = () => {
               <span className="text-neutral-500">Terjawab</span>
               <span className="font-bold"><span className="text-primary">{answeredCount}</span> / {total}</span>
             </div>
-            
+
             <button
               onClick={() => navigate(`/pre-test/${type}/${id}`)}
-              className={`w-full py-3 rounded-xl font-bold border-2 transition-all cursor-pointer shadow-sm ${
-                allAnswered 
-                  ? 'bg-danger border-danger text-light hover:bg-danger/80' 
-                  : 'bg-white border-danger text-danger hover:bg-danger/10'
-              }`}
+              className={`w-full py-3 rounded-xl font-bold border-2 transition-all cursor-pointer shadow-sm ${allAnswered
+                ? 'bg-danger border-danger text-light hover:bg-danger/80'
+                : 'bg-white border-danger text-danger hover:bg-danger/10'
+                }`}
             >
               Selesaikan Tutorial
             </button>

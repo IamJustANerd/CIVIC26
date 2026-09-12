@@ -1,12 +1,54 @@
+import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { AdminHeader } from '../components/AdminHeader'
-import { dummyParticipants, dummyTests } from '../data/examData'
+import { quizApi } from '../api/quiz.api'
+import { submissionApi, type Submission } from '../api/submission.api'
+import { userApi, type User } from '../api/user.api'
+import type { Quiz } from '../api/quiz.api'
 
 export const AdminDetailTestParticipant = () => {
   const navigate = useNavigate()
   const { id } = useParams<{ id: string }>()
   
-  const testInfo = dummyTests.find(t => t.id === id)
+  const [testInfo, setTestInfo] = useState<Quiz | null>(null)
+  const [submissions, setSubmissions] = useState<Submission[]>([])
+  const [users, setUsers] = useState<User[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!id) return
+      try {
+        const [quizRes, subRes, userRes] = await Promise.all([
+          quizApi.getQuizById(id),
+          submissionApi.getSubmissionsByQuizId(id),
+          userApi.getUsers(),
+        ])
+        if (quizRes.success) setTestInfo(quizRes.data)
+        if (subRes.success) setSubmissions(subRes.data)
+        if (userRes.success) setUsers(userRes.data)
+      } catch (error) {
+        console.error('Failed to fetch participant data', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    fetchData()
+  }, [id])
+
+  // Helper to format dates for the table
+  const formatTimeOnly = (dateStr: string | null) => {
+    if (!dateStr) return '-'
+    const d = new Date(dateStr)
+    return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+  }
+
+  const getDuration = (start: string | null, end: string | null) => {
+    if (!start || !end) return '-'
+    const diffMs = new Date(end).getTime() - new Date(start).getTime()
+    const mins = Math.floor(diffMs / 60000)
+    return `${mins} menit`
+  }
 
   return (
     <div className="min-h-screen w-full overflow-x-hidden bg-gradient-to-r from-white via-white via-[70%] to-danger/30 p-4 pt-20 md:p-6 md:pt-24 relative flex flex-col font-oxanium pb-20">
@@ -57,31 +99,66 @@ export const AdminDetailTestParticipant = () => {
                 </tr>
               </thead>
               <tbody>
-                {dummyParticipants.map((participant) => (
-                  <tr key={participant.id} className="border-b-2 border-neutral-100 hover:bg-neutral-50 transition-colors">
-                    <td className="py-4 px-4 font-bold text-dark">{participant.name}</td>
-                    <td className="py-4 px-4 font-bold text-primary">{participant.startTime}</td>
-                    <td className="py-4 px-4 font-bold text-danger">{participant.endTime}</td>
-                    <td className="py-4 px-4 font-bold text-neutral-600">{participant.duration}</td>
-                    <td className="py-4 px-4">
-                      <span className={`font-bold px-3 py-1 rounded-full text-xs ${participant.leaveCount > 0 ? 'bg-danger/10 text-danger' : 'bg-primary/10 text-primary'}`}>
-                        {participant.leaveCount} kali
-                      </span>
-                    </td>
-                    <td className="py-4 px-4 text-center">
-                      {participant.finalScore !== null ? (
-                        <span className="font-bold text-lg text-dark">{participant.finalScore}</span>
-                      ) : (
-                        <span className="font-bold text-xs text-warning bg-warning/10 px-3 py-1 rounded-full">Proses</span>
-                      )}
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={6} className="py-8 text-center">
+                      <div className="flex justify-center">
+                        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                      </div>
                     </td>
                   </tr>
-                ))}
+                ) : submissions.map((sub) => {
+                  const user = users.find(u => u.id === sub.userId)
+                  const name = user ? user.name : 'Unknown User'
+                  const leaveCount = sub.infractions?.length || 0
+                  
+                  // Safe date formatting
+                  const formatSafeTime = (dateStr: string | null) => {
+                    if (!dateStr) return '-'
+                    return formatTimeOnly(dateStr)
+                  }
+                  
+                  // Calculate duration in minutes if both start and finish exist
+                  let durationStr = '-'
+                  if (sub.startTime && sub.finishTime) {
+                    const start = new Date(sub.startTime).getTime()
+                    const finish = new Date(sub.finishTime).getTime()
+                    const diffMins = Math.round((finish - start) / 60000)
+                    durationStr = `${diffMins} mnt`
+                  } else if (sub.startTime && sub.submissionTime) {
+                    // fallback to submissionTime if finishTime is not strictly set but submitted
+                    const start = new Date(sub.startTime).getTime()
+                    const finish = new Date(sub.submissionTime).getTime()
+                    const diffMins = Math.round((finish - start) / 60000)
+                    durationStr = `${diffMins} mnt`
+                  }
+
+                  return (
+                    <tr key={sub.id} className="border-b-2 border-neutral-100 hover:bg-neutral-50 transition-colors">
+                      <td className="py-4 px-4 font-bold text-dark">{name}</td>
+                      <td className="py-4 px-4 font-bold text-primary">{formatSafeTime(sub.startTime)}</td>
+                      <td className="py-4 px-4 font-bold text-danger">{formatSafeTime(sub.finishTime || sub.submissionTime)}</td>
+                      <td className="py-4 px-4 font-bold text-neutral-600">{durationStr}</td>
+                      <td className="py-4 px-4">
+                        <span className={`font-bold px-3 py-1 rounded-full text-xs ${leaveCount > 0 ? 'bg-danger/10 text-danger' : 'bg-primary/10 text-primary'}`}>
+                          {leaveCount} kali
+                        </span>
+                      </td>
+                      <td className="py-4 px-4 text-center">
+                        {sub.isSubmitted && sub.score !== null ? (
+                          <span className="font-bold text-lg text-dark">{Math.round(sub.score)}</span>
+                        ) : (
+                          <span className="font-bold text-xs text-warning bg-warning/10 px-3 py-1 rounded-full">Proses</span>
+                        )}
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>
 
-          {dummyParticipants.length === 0 && (
+          {!isLoading && submissions.length === 0 && (
             <div className="w-full py-12 flex flex-col items-center justify-center text-center">
               <div className="w-20 h-20 bg-neutral-100 rounded-full flex items-center justify-center mb-4">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-10 h-10 text-neutral-400">

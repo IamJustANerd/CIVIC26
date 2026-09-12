@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AdminHeader } from '../components/AdminHeader'
+import { userApi } from '../api/user.api'
 
 export const AdminBuatAkun = () => {
   const navigate = useNavigate()
@@ -10,10 +11,23 @@ export const AdminBuatAkun = () => {
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    console.log({ username, name, password })
-    // Submission logic here
+    setIsSubmitting(true)
+    try {
+      const res = await userApi.createUser({ username, name, password })
+      if (res.success) {
+        alert('Akun berhasil dibuat!')
+        navigate('/admin/list-akun')
+      }
+    } catch (error) {
+      console.error('Failed to create account', error)
+      alert('Gagal membuat akun.')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -96,12 +110,13 @@ export const AdminBuatAkun = () => {
           </div>
 
           <div className="sticky bottom-6 pt-4">
-            <button 
-              type="submit"
-              className="w-full font-bold text-light bg-primary hover:bg-primary/90 py-4 rounded-xl border-2 border-primary transition-all shadow-xl cursor-pointer text-lg tracking-wide"
-            >
-              BUAT AKUN
-            </button>
+              <button 
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full md:w-auto font-bold text-light bg-primary px-8 py-3.5 rounded-xl border-2 border-primary hover:bg-primary/90 transition-all shadow-md cursor-pointer flex items-center justify-center gap-2"
+              >
+                {isSubmitting ? 'MENYIMPAN...' : 'SIMPAN AKUN'}
+              </button>
           </div>
 
         </form>

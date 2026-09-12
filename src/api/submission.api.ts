@@ -8,6 +8,9 @@ export interface Submission {
   score: number | null;
   userStatus: string | null;
   submissionTime: string | null;
+  startTime: string | null;
+  finishTime: string | null;
+  infractions: string[] | null;
 }
 
 export interface SubmissionsResponse {
@@ -23,6 +26,16 @@ export interface SubmissionResponse {
 export const submissionApi = {
   getMySubmissions: async (): Promise<SubmissionsResponse> => {
     const response = await api.get<SubmissionsResponse>('/submissions/me');
+    return response.data;
+  },
+
+  getSubmissionsByQuizId: async (quizId: string): Promise<SubmissionsResponse> => {
+    const response = await api.get<SubmissionsResponse>(`/submissions?quizId=${quizId}`);
+    return response.data;
+  },
+
+  getSubmissionsByUserId: async (userId: string): Promise<SubmissionsResponse> => {
+    const response = await api.get<SubmissionsResponse>(`/submissions?userId=${userId}`);
     return response.data;
   },
 

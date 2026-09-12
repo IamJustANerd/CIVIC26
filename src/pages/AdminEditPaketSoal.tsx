@@ -1,9 +1,28 @@
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AdminHeader } from '../components/AdminHeader'
-import { dummyPaketSoal } from '../data/examData'
+import { quizApi, type Quiz } from '../api/quiz.api'
 
 export const AdminEditPaketSoal = () => {
   const navigate = useNavigate()
+  const [pakets, setPakets] = useState<Quiz[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchPakets = async () => {
+      try {
+        const res = await quizApi.getQuizzes()
+        if (res.success) {
+          setPakets(res.data.filter(q => q.type === 'PAKET'))
+        }
+      } catch (error) {
+        console.error('Failed to fetch pakets', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    fetchPakets()
+  }, [])
 
   return (
     <div className="min-h-screen w-full overflow-x-hidden bg-gradient-to-r from-white via-white via-[70%] to-danger/30 p-4 pt-20 md:p-6 md:pt-24 relative flex flex-col font-oxanium">
@@ -24,7 +43,11 @@ export const AdminEditPaketSoal = () => {
 
         <div className="bg-white w-full rounded-3xl shadow-xl p-6 md:p-10 border-2 border-primary/20 animate-in fade-in zoom-in duration-500">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {dummyPaketSoal.map((paket) => (
+            {isLoading ? (
+              <div className="col-span-full py-12 flex justify-center">
+                <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+              </div>
+            ) : pakets.map((paket) => (
               <div key={paket.id} className="bg-neutral-50 rounded-2xl p-6 border-2 border-neutral-200 hover:border-primary/50 hover:bg-primary/5 transition-all flex flex-col h-full group">
                 <div className="w-12 h-12 bg-primary/10 text-primary rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
@@ -37,10 +60,13 @@ export const AdminEditPaketSoal = () => {
                 
                 <div className="flex items-center justify-between mt-auto pt-4 border-t-2 border-neutral-200">
                   <span className="text-xs font-bold text-neutral-400 bg-neutral-200 py-1 px-3 rounded-full">
-                    {paket.questionCount} Soal
+                    {paket.totalQuestions} Soal
                   </span>
                   
-                  <button className="text-sm font-bold text-primary hover:text-primary-dark transition-colors flex items-center gap-1 cursor-pointer">
+                  <button 
+                    onClick={() => navigate(`/admin/edit-paket-soal/${paket.id}`)}
+                    className="text-sm font-bold text-primary hover:text-primary-dark transition-colors flex items-center gap-1 cursor-pointer"
+                  >
                     Edit
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
@@ -51,7 +77,7 @@ export const AdminEditPaketSoal = () => {
             ))}
           </div>
 
-          {dummyPaketSoal.length === 0 && (
+          {!isLoading && pakets.length === 0 && (
             <div className="w-full py-12 flex flex-col items-center justify-center text-center">
               <div className="w-20 h-20 bg-neutral-100 rounded-full flex items-center justify-center mb-4">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-10 h-10 text-neutral-400">
@@ -59,7 +85,7 @@ export const AdminEditPaketSoal = () => {
                 </svg>
               </div>
               <h3 className="font-bold text-xl text-dark mb-2">Belum ada Paket Soal</h3>
-              <p className="text-neutral-500">Silakan tambahkan paket soal baru melalui menu Tambah Paket Soal.</p>
+              <p className="text-neutral-500">Silakan buat paket soal baru terlebih dahulu.</p>
             </div>
           )}
         </div>

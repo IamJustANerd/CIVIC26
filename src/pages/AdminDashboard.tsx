@@ -2,12 +2,39 @@ import { useState, useEffect } from 'react'
 import { AdminHeader } from '../components/AdminHeader'
 import { DigitBox } from '../components/DigitBox'
 import { AdminDashboardTable } from '../components/AdminDashboardTable'
-import { dummyTryOuts, dummyTests } from '../data/examData'
+import { quizApi } from '../api/quiz.api'
+import type { TableItem } from '../components/DashboardTable'
 
 export const AdminDashboard = () => {
   const [time, setTime] = useState(new Date())
+  const [tryOuts, setTryOuts] = useState<TableItem[]>([])
+  const [tests, setTests] = useState<TableItem[]>([])
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
+    const fetchQuizzes = async () => {
+      try {
+        const res = await quizApi.getQuizzes()
+        if (res.success) {
+          const items: TableItem[] = res.data.map((q) => ({
+            id: q.id,
+            name: q.name,
+            start: q.openTime,
+            end: q.closeTime,
+            status: 'Belum Dimulai', // Dummy status for admin table
+            type: q.type,
+          }))
+          setTryOuts(items.filter(i => i.type === 'TRYOUT'))
+          setTests(items.filter(i => i.type === 'TEST'))
+        }
+      } catch (error) {
+        console.error('Failed to fetch quizzes for admin', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    fetchQuizzes()
+
     const timer = setInterval(() => {
       setTime(new Date())
     }, 1000)
@@ -65,10 +92,22 @@ export const AdminDashboard = () => {
         {/* Bottom Section (Tables) - 70% height */}
         <div className="flex flex-col lg:flex-row gap-4 md:gap-6 lg:flex-[7] min-h-0">
           <div className="w-full lg:w-1/2 flex flex-col min-h-0">
-            <AdminDashboardTable title="Try Out" type="tryout" data={dummyTryOuts} />
+            {isLoading ? (
+              <div className="flex-1 flex items-center justify-center bg-light border-2 border-primary rounded-3xl min-h-[300px]">
+                <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+              </div>
+            ) : (
+              <AdminDashboardTable title="Try Out" type="tryout" data={tryOuts} />
+            )}
           </div>
           <div className="w-full lg:w-1/2 flex flex-col min-h-0">
-            <AdminDashboardTable title="Test" type="test" data={dummyTests} />
+            {isLoading ? (
+              <div className="flex-1 flex items-center justify-center bg-light border-2 border-primary rounded-3xl min-h-[300px]">
+                <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+              </div>
+            ) : (
+              <AdminDashboardTable title="Test" type="test" data={tests} />
+            )}
           </div>
         </div>
 
