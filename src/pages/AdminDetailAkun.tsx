@@ -4,6 +4,7 @@ import { AdminHeader } from '../components/AdminHeader'
 import { userApi, type User } from '../api/user.api'
 import { submissionApi, type Submission } from '../api/submission.api'
 import { quizApi, type Quiz } from '../api/quiz.api'
+import { questionApi, type Question } from '../api/question.api'
 
 export const AdminDetailAkun = () => {
   const navigate = useNavigate()
@@ -14,6 +15,30 @@ export const AdminDetailAkun = () => {
   const [submissions, setSubmissions] = useState<Submission[]>([])
   const [quizzes, setQuizzes] = useState<Quiz[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  
+  const [selectedQuizQuestions, setSelectedQuizQuestions] = useState<Question[]>([])
+  const [isLoadingAnswers, setIsLoadingAnswers] = useState(false)
+
+  useEffect(() => {
+    const fetchQuestions = async () => {
+      if (!selectedHistoryDetail) {
+        setSelectedQuizQuestions([])
+        return
+      }
+      setIsLoadingAnswers(true)
+      try {
+        const res = await questionApi.getQuestionsByQuizId(selectedHistoryDetail.quizId)
+        if (res.success) {
+          setSelectedQuizQuestions(res.data)
+        }
+      } catch (error) {
+        console.error('Failed to fetch questions', error)
+      } finally {
+        setIsLoadingAnswers(false)
+      }
+    }
+    fetchQuestions()
+  }, [selectedHistoryDetail])
 
   useEffect(() => {
     const fetchData = async () => {
@@ -83,10 +108,10 @@ export const AdminDetailAkun = () => {
           </button>
           <div>
             <h1 className="font-slant text-3xl md:text-4xl text-dark uppercase">
-              {account ? (account.name || 'TANPA NAMA') : 'DETAIL HISTORY AKUN'}
+              {account ? `@${account.username}` : 'DETAIL HISTORY AKUN'}
             </h1>
             {account && (
-              <p className="text-neutral-500 font-bold text-sm mt-1">@{account.username}</p>
+              <p className="text-neutral-500 font-bold text-sm mt-1">{account.name || 'Tanpa Nama'}</p>
             )}
           </div>
         </div>
@@ -120,14 +145,32 @@ export const AdminDetailAkun = () => {
                 ) : submissions.map((sub) => {
                   const quiz = quizzes.find(q => q.id === sub.quizId)
                   const testName = quiz ? quiz.name : 'Unknown Quiz'
-                  const leaveCount = (sub as any).infractions?.length || 0
+                  const leaveCount = sub.infractions?.length || 0
+
+                  const formatSafeTime = (dateStr: string | null) => {
+                    if (!dateStr) return '-'
+                    return formatDateTime(dateStr)
+                  }
+
+                  let durationStr = '-'
+                  if (sub.startTime && sub.finishTime) {
+                    const start = new Date(sub.startTime).getTime()
+                    const finish = new Date(sub.finishTime).getTime()
+                    const diffMins = Math.round((finish - start) / 60000)
+                    durationStr = `${diffMins} mnt`
+                  } else if (sub.startTime && sub.submissionTime) {
+                    const start = new Date(sub.startTime).getTime()
+                    const finish = new Date(sub.submissionTime).getTime()
+                    const diffMins = Math.round((finish - start) / 60000)
+                    durationStr = `${diffMins} mnt`
+                  }
 
                   return (
                     <tr key={sub.id} className="border-b-2 border-neutral-100 hover:bg-neutral-50 transition-colors">
                       <td className="py-4 px-4 font-bold text-dark">{testName}</td>
-                      <td className="py-4 px-4 font-bold text-primary text-sm max-w-[150px]">-</td>
-                      <td className="py-4 px-4 font-bold text-danger text-sm max-w-[150px]">{formatDateTime(sub.submissionTime)}</td>
-                      <td className="py-4 px-4 font-bold text-neutral-600">-</td>
+                      <td className="py-4 px-4 font-bold text-primary text-sm max-w-[150px]">{formatSafeTime(sub.startTime)}</td>
+                      <td className="py-4 px-4 font-bold text-danger text-sm max-w-[150px]">{formatSafeTime(sub.finishTime || sub.submissionTime)}</td>
+                      <td className="py-4 px-4 font-bold text-neutral-600">{durationStr}</td>
                       <td className="py-4 px-4">
                         <span className={`font-bold px-3 py-1 rounded-full text-xs ${leaveCount > 0 ? 'bg-danger/10 text-danger' : 'bg-primary/10 text-primary'}`}>
                           {leaveCount} kali
@@ -200,20 +243,31 @@ export const AdminDetailAkun = () => {
             </div>
 
             <div className="p-6 overflow-y-auto flex-grow bg-white">
-              <div className="flex flex-col gap-3">
-                {Array.from({ length: 15 }).map((_, idx) => {
-                  const choices = ['A', 'B', 'C', 'D', 'E', '-'];
-                  const picked = choices[(idx * 7 + 3) % choices.length];
-                  return (
-                    <div key={idx} className="flex justify-between items-center p-3 rounded-xl border-2 border-neutral-100 hover:border-primary/30 transition-colors">
-                      <span className="font-bold text-sm text-neutral-600">Soal {idx + 1}</span>
-                      <span className={`font-bold text-lg w-8 h-8 flex items-center justify-center rounded-lg ${picked === '-' ? 'bg-neutral-100 text-neutral-400' : 'bg-primary/10 text-primary'}`}>
-                        {picked}
-                      </span>
+              {isLoadingAnswers ? (
+                <div className="flex justify-center py-8">
+                  <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-3">
+                  {selectedQuizQuestions.length > 0 ? selectedQuizQuestions.map((q, idx) => {
+                    const ansRecord = selectedHistoryDetail.answers?.find((a: any) => a.id === q.id)
+                    const picked = ansRecord ? ansRecord.answer.toUpperCase() : '-'
+                    
+                    return (
+                      <div key={idx} className="flex justify-between items-center p-3 rounded-xl border-2 border-neutral-100 hover:border-primary/30 transition-colors">
+                        <span className="font-bold text-sm text-neutral-600">Soal {idx + 1}</span>
+                        <span className={`font-bold text-lg w-8 h-8 flex items-center justify-center rounded-lg ${picked === '-' ? 'bg-neutral-100 text-neutral-400' : 'bg-primary/10 text-primary'}`}>
+                          {picked}
+                        </span>
+                      </div>
+                    )
+                  }) : (
+                    <div className="text-center text-neutral-500 py-4 font-bold text-sm">
+                      Tidak ada soal untuk ujian ini.
                     </div>
-                  )
-                })}
-              </div>
+                  )}
+                </div>
+              )}
             </div>
             
             <div className="p-4 border-t-2 border-neutral-100 bg-neutral-50 text-center">

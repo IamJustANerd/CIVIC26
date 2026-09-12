@@ -13,7 +13,7 @@ export const AdminListAkun = () => {
       try {
         const res = await userApi.getUsers()
         if (res.success) {
-          setUsers(res.data)
+          setUsers(res.data.filter((u) => !u.isAdmin))
         }
       } catch (error) {
         console.error('Failed to fetch users', error)
@@ -55,13 +55,10 @@ export const AdminListAkun = () => {
                   </svg>
                 </div>
                 
-                <h3 className="font-bold text-xl text-dark mb-1">{acc.name || <span className="text-neutral-400 italic">Tanpa Nama</span>}</h3>
-                <p className="text-sm text-neutral-500 font-bold mb-4 flex-grow">@{acc.username}</p>
+                <h3 className="font-bold text-xl text-dark mb-1">@{acc.username}</h3>
+                <p className="text-sm text-neutral-500 font-bold mb-4 flex-grow">{acc.name || <span className="text-neutral-400 italic">Tanpa Nama</span>}</p>
                 
-                <div className="flex items-center justify-between mt-auto pt-4 border-t-2 border-neutral-200">
-                  <span className="text-xs font-bold bg-neutral-200 text-neutral-500 py-1 px-3 rounded-full">
-                    {acc.isAdmin ? 'Admin' : 'Peserta'}
-                  </span>
+                <div className="flex items-center justify-end mt-auto pt-4 border-t-2 border-neutral-200">
                   
                   <button 
                     onClick={() => navigate(`/admin/detail-akun/${acc.id}`)}

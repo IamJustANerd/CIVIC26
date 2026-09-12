@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import * as XLSX from 'xlsx'
 import { useNavigate, useParams } from 'react-router-dom'
 import { AdminHeader } from '../components/AdminHeader'
 import { quizApi } from '../api/quiz.api'
@@ -46,9 +47,59 @@ export const AdminDetailTestParticipant = () => {
   const getDuration = (start: string | null, end: string | null) => {
     if (!start || !end) return '-'
     const diffMs = new Date(end).getTime() - new Date(start).getTime()
-    const mins = Math.floor(diffMs / 60000)
+    const mins = Math.round(diffMs / 60000)
     return `${mins} menit`
   }
+
+  const handleExportExcel = () => {
+    if (submissions.length === 0) {
+      alert('Tidak ada data peserta untuk di-export.')
+      return
+    }
+
+    const exportData = submissions.map((sub) => {
+      const user = users.find((u) => u.id === sub.userId)
+      const name = user ? user.name : 'Unknown User'
+      
+      const formatSafeTime = (dateStr: string | null) => {
+        if (!dateStr) return '-'
+        return formatTimeOnly(dateStr)
+      }
+
+      let durationStr = '-'
+      if (sub.startTime && sub.finishTime) {
+        const start = new Date(sub.startTime).getTime()
+        const finish = new Date(sub.finishTime).getTime()
+        const diffMins = Math.round((finish - start) / 60000)
+        durationStr = `${diffMins} mnt`
+      } else if (sub.startTime && sub.submissionTime) {
+        const start = new Date(sub.startTime).getTime()
+        const finish = new Date(sub.submissionTime).getTime()
+        const diffMins = Math.round((finish - start) / 60000)
+        durationStr = `${diffMins} mnt`
+      }
+
+      const leaveCount = sub.infractions?.length || 0
+      const score = sub.isSubmitted && sub.score !== null ? Math.round(sub.score) : 'Proses'
+
+      return {
+        'Nama Peserta': name,
+        'Waktu Mulai': formatSafeTime(sub.startTime),
+        'Waktu Selesai': formatSafeTime(sub.finishTime || sub.submissionTime),
+        'Durasi': durationStr,
+        'Keluar Halaman': `${leaveCount} kali`,
+        'Skor Akhir': score,
+      }
+    })
+
+    const worksheet = XLSX.utils.json_to_sheet(exportData)
+    const workbook = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Data Peserta')
+    
+    const fileName = testInfo ? `Data_Peserta_${testInfo.name.replace(/\s+/g, '_')}.xlsx` : 'Data_Peserta.xlsx'
+    XLSX.writeFile(workbook, fileName)
+  }
+
 
   return (
     <div className="min-h-screen w-full overflow-x-hidden bg-gradient-to-r from-white via-white via-[70%] to-danger/30 p-4 pt-20 md:p-6 md:pt-24 relative flex flex-col font-oxanium pb-20">
@@ -74,7 +125,7 @@ export const AdminDetailTestParticipant = () => {
           </div>
           
           <button 
-            onClick={() => alert('Fitur Export Excel akan segera hadir!')}
+            onClick={handleExportExcel}
             className="flex items-center gap-2 bg-[#21A366] text-white font-bold px-5 py-2.5 rounded-xl shadow-md border-2 border-[#107C41] hover:bg-[#107C41] transition-colors cursor-pointer"
           >
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">

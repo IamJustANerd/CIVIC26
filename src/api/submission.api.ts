@@ -11,6 +11,7 @@ export interface Submission {
   startTime: string | null;
   finishTime: string | null;
   infractions: string[] | null;
+  answers: { id: string; answer: string }[] | null;
 }
 
 export interface SubmissionsResponse {
